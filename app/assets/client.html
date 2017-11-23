@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<script>
+
+var conn;
+var brothers = new Set();
+
+var print = function(message) {
+    var d = document.createElement("div");
+    d.innerHTML = message;
+    output.appendChild(d);
+};
+
+function Connection() {
+    this.createConnection = function(addr)
+    {
+        var ws = new WebSocket ('ws://'+addr+'/ws');
+
+        ws.onopen = function(evt) {
+            print("OPEN");
+            name = document.getElementById("HandShake").value
+            print("HANDSHAKE: " + name);
+            ws.send("[HELO]" + name);
+        };
+
+        ws.onclose = function(evt) {
+			switch(evt.code)
+			{
+				case 1005:
+            		print("CLOSE By Client");
+                    ws = null;
+                    disconnect()
+					break;
+				case 1000:
+            		print("CLOSE By SERVER: " + evt.reason);
+					ws = null;
+                    disconnect()
+					break;
+				case 1006:
+				default:
+            		print("Lost Connection: " + evt.reason);
+					console.log(evt);
+					for (let item of brothers) {
+						reconnect(item)
+						if (conn.readyState == 0) {
+							brothers.delete(item)
+						}
+						else break;
+					}
+					break;
+			}
+        };
+
+        ws.onmessage = function(evt) {
+			switch(evt.data.substr(0, 6))
+			{
+				case "[RDCT]":
+					print("REDIRECT: " +  evt.data);
+					reconnect(evt.data.substr(6))
+					break;
+				case "[FLBK]":
+					obj = JSON.parse(evt.data.substr(6));
+					for (var k in obj.BRTHLST){
+					    if (obj.BRTHLST.hasOwnProperty(k))
+							 brothers.add(obj.BRTHLST[k].Httpaddr)
+					}
+					break;
+				default:
+					print("INCOMMING: " +  evt.data);
+			}
+			console.log(brothers);
+        };
+
+        ws.onerror = function(evt) {
+            print("ERROR: " + evt.data);
+        };
+
+        send = function(val)
+        {
+            ws.send(val);
+        }
+
+        return ws;
+    }
+}
+
+function reconnect(addr)
+{
+    print("TRYING "+addr);
+    conn = new Connection().createConnection(addr);
+	return conn;
+};
+
+function disconnect()
+{
+    conn = null;
+}
+
+window.addEventListener("load", function(evt) {
+
+    var output = document.getElementById("output");
+    var input = document.getElementById("input");
+
+    document.getElementById("open").onclick = function(evt) {
+        if (conn != null) return false;
+        conn = new Connection().createConnection('{{.Host}}');
+        return false;
+    };
+
+    document.getElementById("bcast").onclick = function(evt) {
+        if (conn == null) return false;
+        print(bcast_input.value);
+        conn.send("[BCST]" + bcast_input.value);
+        return false;
+    };
+
+	document.getElementById("cmmd").onclick = function(evt) {
+        if (conn == null) return false;
+        print(cmmd_input.value);
+        conn.send("[STOR]" + cmmd_input.value);
+        return false;
+    };
+
+	document.getElementById("gcrypt").onclick = function(evt) {
+        if (conn == null) return false;
+        print(gcrypt_input.value);
+        conn.send("[GKEY]" + gcrypt_input.value);
+        return false;
+    };
+
+    document.getElementById("close").onclick = function(evt) {
+        conn.close();
+        conn = null;
+        return false;
+    };
+});
+
+</script>
+</head>
+<body>
+<div class="container">
+	<form>
+
+		<div class="row">
+			<div class="col-xs-1">
+				<label for="HandShake">HandShake</label>
+			</div>
+			<div class="col-xs-9">
+				<input class="form-control input-sm" id="HandShake" type="text" width="80%" value="{{.HShake}}">
+			</div>
+			<div class="col-xs-2">
+				<button class="btn btn-default btn-sm" id="open">Open</button>
+				<button class="btn btn-default btn-sm" id="close">Close</button>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-1">
+				<label for="bcast_input">Broadcast</label>
+			</div>
+			<div class="col-xs-9">
+				<input class="form-control input-sm" id="bcast_input" type="text" value='Hello World !!'>
+			</div>
+			<div class="col-xs-2">
+				<button class="btn btn-default btn-sm" id="bcast">Send</button>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-1">
+				<label for="cmmd_input">Command</label>
+			</div>
+			<div class="col-xs-9">
+				<input class="form-control input-sm" id="cmmd_input" type="text" value='{"actions":[{"sqs":1497344948,"ad":1497345028,"sqi":"db644a036ee3599772afe0d0a11ad5ca","ai":648136,"fc":"IPH","a":"SS","air":"1","vid":"studio_iphone_1","cp":74,"cc":"fr","vmi":"ios_device_id","off":"0","vqa":"medium","ua":"TEST_JULES","ac":"spsa","ci":469124,"nt":"WWAN","vt":74,"dr":1497345029,"rr":"","ip":"10.31.200.168"}]}'>
+			</div>
+			<div class="col-xs-1">
+				<button class="btn btn-default btn-sm" id="cmmd">Send</button>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-1">
+				<label for="gcrypt_input">GenCrypto</label>
+			</div>
+			<div class="col-xs-9">
+				<input class="form-control input-sm" id="gcrypt_input" type="text" value="client_name|app_name|USER">
+			</div>
+			<div class="col-xs-1">
+				<button class="btn btn-default btn-sm" id="gcrypt">Get</button>
+			</div>
+		</div>
+
+	</form>
+
+	<div id="output" class="col-xs-12 pre-scrollable"></div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+</body>
+</html>

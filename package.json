@@ -1,0 +1,21 @@
+{
+  "name": "Phaser",
+  "version": "0.0.1",
+  "description": "phaser.js",
+  "author": "Djoulzy/Nans",
+  "license": "MI6",
+  "devDependencies": {
+    "auto-reload-brunch": "^2.7.1",
+    "brunch": "^2.10.12",
+    "javascript-brunch": "^2.10.0",
+    "less-brunch": "^2.10.0"
+  },
+  "scripts": {
+    "start": "brunch watch --server",
+    "build": "brunch build --production"
+  },
+  "dependencies": {
+    "crypto-js": "^3.1.9-1",
+    "phaser-ce": "^2.9.2"
+  }
+}

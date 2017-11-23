@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+    <head>
+    	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>Phaser Examples - tilemaps/csv_map.js</title>
+
+		<script src="js/vendor.js"></script>
+        <script src="phaser-inspector.min.js"></script>
+		<script src="js/app.js"></script>
+
+		<script>
+			function findGetParameter(parameterName) {
+				var result = null,
+				tmp = [];
+				location.search.substr(1).split("&").forEach(function (item) {
+					tmp = item.split("=");
+					if (tmp[0] === parameterName) result = decodeURIComponent(tmp[1]);
+				});
+				return result;
+			}
+		</script>
+	</head>
+	<body>
+		<div id="gameDiv"></div>
+	</body>
+	<script>
+		require('client/gameStart').init("game");
+	</script>
+</html>
