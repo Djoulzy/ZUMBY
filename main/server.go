@@ -4,17 +4,17 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/Djoulzy/Polycom/hub"
-	"github.com/Djoulzy/Polycom/nettools/httpserver"
-	"github.com/Djoulzy/Polycom/nettools/scaling"
-	"github.com/Djoulzy/Polycom/nettools/tcpserver"
-	"github.com/Djoulzy/Polycom/urlcrypt"
-	"github.com/Djoulzy/Polycom/world"
+	"github.com/Djoulzy/ZUMBY/hub"
+	"github.com/Djoulzy/ZUMBY/nettools/httpserver"
+	"github.com/Djoulzy/ZUMBY/nettools/scaling"
+	"github.com/Djoulzy/ZUMBY/nettools/tcpserver"
+	"github.com/Djoulzy/ZUMBY/urlcrypt"
+	"github.com/Djoulzy/ZUMBY/world"
 
 	"github.com/Djoulzy/Tools/clog"
 	"github.com/Djoulzy/Tools/config"
 
-	"github.com/Djoulzy/Polycom/monitoring"
+	"github.com/Djoulzy/ZUMBY/monitoring"
 )
 
 var Cryptor *urlcrypt.Cypher

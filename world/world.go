@@ -8,9 +8,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/Djoulzy/Polycom/hub"
-	"github.com/Djoulzy/Polycom/storage"
 	"github.com/Djoulzy/Tools/clog"
+	"github.com/Djoulzy/ZUMBY/hub"
+	"github.com/Djoulzy/ZUMBY/storage"
 	"github.com/nu7hatch/gouuid"
 )
 
@@ -302,6 +302,7 @@ func (W *WORLD) Run() {
 				W.Map.Draw()
 			}
 			W.sendWorldUpdate()
+			W.Map.genImage()
 
 			// t := time.Now()
 			// elapsed := t.Sub(start)
@@ -350,7 +351,7 @@ func Init(zeHub *hub.Hub) *WORLD {
 	zeWorld.Map.loadTiledJSONMap("../data/final.json")
 
 	zeWorld.AOIs = BuildAOIList(zeWorld)
-	clog.Trace("", "", "%s", zeWorld.AOIs)
+	// clog.Trace("", "", "%s", zeWorld.AOIs)
 
 	// m := mapper.NewMap()
 	// mapJSON, _ := json.Marshal(m)

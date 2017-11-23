@@ -21,7 +21,7 @@ type AOIList [][]*AOI
 func BuildAOIList(W *WORLD) *AOIList {
 	width := W.Map.Width / AOIWidth
 	height := W.Map.Height / AOIHeight
-	clog.Info("", "", "Map Size: %dx%d -> AOIList: %dx%d", W.Map.Width, W.Map.Height, width, height)
+	clog.Info("AOI", "BuildAOIList", "Map Size: %dx%d -> AOIList: %dx%d", W.Map.Width, W.Map.Height, width, height)
 
 	var L AOIList
 	L = make(AOIList, width)

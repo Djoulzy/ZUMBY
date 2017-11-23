@@ -13,10 +13,10 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/Djoulzy/Polycom/hub"
-	"github.com/Djoulzy/Polycom/monitoring"
-	"github.com/Djoulzy/Polycom/urlcrypt"
 	"github.com/Djoulzy/Tools/clog"
+	"github.com/Djoulzy/ZUMBY/hub"
+	"github.com/Djoulzy/ZUMBY/monitoring"
+	"github.com/Djoulzy/ZUMBY/urlcrypt"
 )
 
 const (
@@ -63,7 +63,9 @@ func (m *Manager) statusPage(w http.ResponseWriter, r *http.Request) {
 		string(handShake),
 	}
 
-	homeTempl, err := template.ParseFiles("../html/status.html")
+	zeFile := "../public/status.html"
+	clog.Test("HTTPServer", "statusPage", "%s", zeFile)
+	homeTempl, err := template.ParseFiles(zeFile)
 	if err != nil {
 		clog.Error("HTTPServer", "statusPage", "%s", err)
 		return
@@ -82,7 +84,7 @@ func (m *Manager) testPage(w http.ResponseWriter, r *http.Request) {
 		string(handShake),
 	}
 
-	homeTempl, err := template.ParseFiles("../html/client.html")
+	homeTempl, err := template.ParseFiles("../public/client.html")
 	if err != nil {
 		clog.Error("HTTPServer", "testPage", "%s", err)
 		return
@@ -257,8 +259,8 @@ func (m *Manager) Start(conf *Manager) {
 		HandshakeTimeout: time.Duration(m.HandshakeTimeout) * time.Second,
 	} // use default options
 
-	fs := http.FileServer(http.Dir("../html/js"))
-	http.Handle("/js/", http.StripPrefix("/js/", fs))
+	fs := http.FileServer(http.Dir("../public/"))
+	http.Handle("/client/", http.StripPrefix("/client/", fs))
 
 	http.HandleFunc("/data/", m.dataServe)
 	http.HandleFunc("/test", m.testPage)

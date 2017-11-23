@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Djoulzy/Polycom/hub"
-	"github.com/Djoulzy/Polycom/monitoring"
-	"github.com/Djoulzy/Polycom/nettools/tcpserver"
+	"github.com/Djoulzy/ZUMBY/hub"
+	"github.com/Djoulzy/ZUMBY/monitoring"
+	"github.com/Djoulzy/ZUMBY/nettools/tcpserver"
 	"github.com/Djoulzy/Tools/clog"
 )
 

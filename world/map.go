@@ -3,7 +3,11 @@ package world
 import (
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"io/ioutil"
+	"os"
 
 	"github.com/Djoulzy/Tools/clog"
 )
@@ -182,4 +186,33 @@ func (M *MapData) Draw() {
 		display = fmt.Sprintf("%s*\n*", display)
 	}
 	fmt.Printf("%s", display)
+}
+
+func (M *MapData) genImage() {
+	// Create an 100 x 50 image
+	img := image.NewRGBA(image.Rect(0, 0, M.Width, M.Height))
+
+	for y := 0; y < M.Height; y++ {
+		for x := 0; x < M.Width; x++ {
+			val := M.Block[x][y]
+			if val == 0 {
+				img.Set(x, y, color.RGBA{0, 0, 0, 255})
+			} else {
+				img.Set(x, y, color.RGBA{255, 255, 255, 255})
+			}
+			if M.Entities[x][y] != nil {
+				switch M.Entities[x][y].(type) {
+				case *MOB:
+					img.Set(x, y, color.RGBA{255, 0, 0, 255})
+				case *USER:
+					img.Set(x, y, color.RGBA{0, 255, 0, 255})
+				}
+			}
+		}
+	}
+
+	// Save to out.png
+	f, _ := os.OpenFile("../public/assets/mon.png", os.O_WRONLY|os.O_CREATE, 0600)
+	defer f.Close()
+	png.Encode(f, img)
 }

@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		pseudo = $("#pseudo").val()
 		pass = $("#pass").val()
 		params = jcrypt.Encrypt_b64(pseudo+'|'+pass+'|USER')
-		$("#loginform").attr("action", "/game.html?key="+params)
+		$("#loginform").attr("action", "/client/game.html?key="+params)
 		$("#loginform").submit()
 	});
 

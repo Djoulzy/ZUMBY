@@ -9,8 +9,8 @@ import (
 	"time"
 
 	// "github.com/davecgh/go-spew/spew"
-	"github.com/Djoulzy/Polycom/hub"
-	"github.com/Djoulzy/Polycom/urlcrypt"
+	"github.com/Djoulzy/ZUMBY/hub"
+	"github.com/Djoulzy/ZUMBY/urlcrypt"
 	"github.com/Djoulzy/Tools/clog"
 )
 

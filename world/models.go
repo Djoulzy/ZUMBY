@@ -3,7 +3,7 @@ package world
 import (
 	"time"
 
-	"github.com/Djoulzy/Polycom/hub"
+	"github.com/Djoulzy/ZUMBY/hub"
 )
 
 const (
@@ -12,7 +12,7 @@ const (
 	AOIWidth  = 10
 	AOIHeight = 10
 	mobSpeed  = 8
-	maxMobNum = 0
+	maxMobNum = 1000
 )
 
 type Entity struct {
