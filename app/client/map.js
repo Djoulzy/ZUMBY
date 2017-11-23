@@ -18,6 +18,7 @@ class Area
 		this.name = '0_0'
 		this.tarrain = null
 		this.obstacles = null
+		this.hauteurs = null
     }
 
 	setWorldBound() {
@@ -36,9 +37,11 @@ class Area
 			this.data.addTilesetImage('final');
 			this.terrain = this.data.createLayer('terrain')
 			this.obstacles = this.data.createLayer('obstacles')
+			this.hauteurs = this.data.createLayer('hauteurs')
 
 			this.game.backLayer.add(this.terrain)
 			this.game.backLayer.add(this.obstacles)
+			this.game.frontLayer.add(this.hauteurs)
 
 			this.status = 2
 		}
@@ -58,6 +61,7 @@ class Area
 		if (this.status == 2) {
 			this.terrain.destroy()
 			this.obstacles.destroy()
+			this.hauteurs.destroy()
 			this.data.destroy()
 		}
 	}
