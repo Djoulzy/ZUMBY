@@ -9,8 +9,8 @@ import (
 const (
 	timeStep  = 100 * time.Millisecond // Actualisation 10 par seconde
 	tileSize  = 32
-	AOIWidth  = 10
-	AOIHeight = 10
+	AOIWidth  = 30
+	AOIHeight = 30
 	mobSpeed  = 8
 	maxMobNum = 1000
 )
@@ -43,6 +43,12 @@ type USER struct {
 	hubClient *hub.Client
 	Entity
 	Attributes
+}
+
+type ITEM struct {
+	ID int `bson:"id" json:"id"`
+	X  int `bson:"x" json:"x"` // Col nums
+	Y  int `bson:"y" json:"y"` // Row nums
 }
 
 type MOB struct {

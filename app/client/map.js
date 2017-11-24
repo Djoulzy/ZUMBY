@@ -70,7 +70,7 @@ class Area
 class Map
 {
     constructor(game) {
-		this.playerArea = new Phaser.Point(0, 0)
+		this.playerArea = new Phaser.Point(-1, -1)
         this.WorldMap = new Area(game)
         this.game = game
     }

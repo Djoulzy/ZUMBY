@@ -32,7 +32,7 @@ Boot.prototype = {
 	  	this.game.load.atlas('zombies', 'assets/ZombieSheet.png', 'assets/ZombieSheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
 	  	this.game.load.atlas('shoot', 'assets/shoot.png', 'assets/shoot.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
 		this.game.load.image('final', 'http://'+Config.MMOServer.Host+'/data/final.png')
-		this.game.load.image('cartouche', 'http://'+Config.MMOServer.Host+'/data/cartouche.png');
+		this.game.load.image('cartouche', 'assets/cartouche.png');
         this.game.load.start();
     },
 

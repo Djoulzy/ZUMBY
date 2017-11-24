@@ -13,6 +13,9 @@ class Remote extends User
 		// this.sprite.body.onMoveComplete.add(this.moveRemoteOver, this);
 		// this.graphics.lineStyle(2, 0x14c818 , 1);
 		this.moves = new Array()
+
+		if (subview == "")
+			this.game.DynLoad.loadUser(face, this.initSprite.bind(this))
 	}
 
 	// debugLine() {

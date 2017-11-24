@@ -15,7 +15,6 @@ class User
 		this.PlayerIsMoving = false
 		// this.line = new Phaser.Line(0, 0, 100, 100);
 	    // this.graphics=game.add.graphics(0,0);
-		this.game.DynLoad.loadUser(face, this.initSprite.bind(this))
 	}
 
 	initAnims() {

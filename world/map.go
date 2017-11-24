@@ -62,6 +62,7 @@ type MapData struct {
 	Over     [][]int
 	Block    [][]int
 	Ground   [][]int
+	Items    [][]ITEM
 	FileData FILEMAP
 }
 
@@ -79,12 +80,14 @@ func (M *MapData) loadTiledJSONMap(file string) {
 	M.Ground = make([][]int, M.Width)
 	M.Over = make([][]int, M.Width)
 	M.Block = make([][]int, M.Width)
+	M.Items = make([][]ITEM, M.Width)
 	M.Entities = make([][]interface{}, M.Width)
 	for i := 0; i < M.Width; i++ {
 		M.Entities[i] = make([]interface{}, M.Height)
 		M.Ground[i] = make([]int, M.Height)
 		M.Block[i] = make([]int, M.Height)
 		M.Over[i] = make([]int, M.Height)
+		M.Items[i] = make([]ITEM, M.Height)
 	}
 
 	row := 0
@@ -94,6 +97,15 @@ func (M *MapData) loadTiledJSONMap(file string) {
 			M.Ground[col][row] = M.FileData.Layers[0].Data[(row*M.Width)+col]
 			M.Block[col][row] = M.FileData.Layers[1].Data[(row*M.Width)+col]
 			M.Over[col][row] = M.FileData.Layers[2].Data[(row*M.Width)+col]
+			item := M.FileData.Layers[3].Data[(row*M.Width)+col]
+			if item != 0 {
+				M.Items[col][row] = ITEM{
+					ID: M.FileData.Layers[3].Data[(row*M.Width)+col],
+					X:  col,
+					Y:  row,
+				}
+				M.Over[col][row] = item
+			}
 			M.Entities[col][row] = nil
 			col++
 		}

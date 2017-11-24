@@ -18,7 +18,10 @@ Play.prototype = {
     create: function() {
 		this.game.physics.startSystem(Phaser.Physics.ARCADE);
 		this.running = false
-		this.cursors = this.game.input.keyboard.addKeys({ 'space': Phaser.Keyboard.SPACEBAR, 'up': Phaser.Keyboard.UP, 'down': Phaser.Keyboard.DOWN, 'left': Phaser.Keyboard.LEFT, 'right': Phaser.Keyboard.RIGHT })
+		this.cursors = this.game.input.keyboard.addKeys({
+			'space': Phaser.Keyboard.SPACEBAR,
+			'up': Phaser.Keyboard.UP,
+			'down': Phaser.Keyboard.DOWN, 'left': Phaser.Keyboard.LEFT, 'right': Phaser.Keyboard.RIGHT })
         this.game.DynLoad = new DynLoad(this.game)
 
 		this.entities = [];
@@ -132,6 +135,7 @@ Play.prototype = {
     			else if (this.cursors.right.isDown) this.game.player.moveRight(this.game.Properties.step, this.game.Properties.speed)
     			else if (this.cursors.up.isDown) this.game.player.moveUp(this.game.Properties.step, this.game.Properties.speed)
     			else if (this.cursors.down.isDown) this.game.player.moveDown(this.game.Properties.step, this.game.Properties.speed)
+				else if (this.cursors.p.isDown) console.log("P")
     			else if (this.cursors.space.isDown) {
     				var portee = 5
     				this.bullets.fire(this.game.player, portee, this.game.Properties.speed);

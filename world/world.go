@@ -267,6 +267,8 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 			W.Map.Entities[user.X][user.Y] = user
 			mess := []byte(fmt.Sprintf("[BCST]%s", message))
 			W.AOIs.addEvent(infos.X, infos.Y, mess)
+		// case "[LAOI]":
+		// 	W.AOIs.getAOISetupForPlayer(infos.X, infos.Y)
 		default:
 			clog.Warn("World", "CallToAction", "Bad Action : %s", cmd)
 		}
@@ -351,6 +353,8 @@ func Init(zeHub *hub.Hub) *WORLD {
 	zeWorld.Map.loadTiledJSONMap("../data/final.json")
 
 	zeWorld.AOIs = BuildAOIList(zeWorld)
+	// zeWorld.AOIs.addItemsToAOI(zeWorld.Map.Items)
+
 	// clog.Trace("", "", "%s", zeWorld.AOIs)
 
 	// m := mapper.NewMap()

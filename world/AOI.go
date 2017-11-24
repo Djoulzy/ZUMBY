@@ -12,8 +12,9 @@ type AOI struct {
 	X         int
 	Y         int
 	Adjacents []*AOI
-	Actions   [][]byte
-	update    []byte
+	// Items     []ITEM
+	Actions [][]byte
+	update  []byte
 }
 
 type AOIList [][]*AOI
@@ -82,6 +83,16 @@ func (aoi *AOI) addEvent(mess []byte) {
 	aoi.Actions = append(aoi.Actions, mess)
 }
 
+// func (L *AOIList) addItemsToAOI(items [][]ITEM) {
+// 	clog.Info("AOI", "addItemsToAOI", "Adding items to AOIs")
+// 	for _, cols := range items {
+// 		for _, item := range cols {
+// 			aoi := L.getAOIfromCoord(item.X, item.Y)
+// 			aoi.Items = append(aoi.Items, item)
+// 		}
+// 	}
+// }
+
 func (L *AOIList) addEvent(x, y int, mess []byte) {
 	aoi := L.getAOIfromCoord(x, y)
 	aoi.addEvent(mess)
@@ -95,6 +106,12 @@ func (L AOIList) computeUpdates() {
 		}
 	}
 }
+
+// func (L *AOIList) getAOISetupForPlayer(x, y int) {
+// 	aoi := L.getAOIfromCoord(x, y)
+// 	for _, adj := range aoi.Adjacents {
+// 	}
+// }
 
 func (L *AOIList) getUpdateForPlayer(x, y int) ([]byte, error) {
 	aoi := L.getAOIfromCoord(x, y)
