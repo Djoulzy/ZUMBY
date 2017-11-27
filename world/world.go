@@ -16,8 +16,10 @@ import (
 
 func (W *WORLD) findSpawnPlace() (int, int) {
 	for {
-		x := rand.Intn(W.Map.Width)
-		y := rand.Intn(W.Map.Height)
+		// x := rand.Intn(W.Map.Width)
+		// y := rand.Intn(W.Map.Height)
+		x := rand.Intn(30)
+		y := rand.Intn(30)
 		if W.tileIsFree(x, y) {
 			return x, y
 		}
@@ -42,11 +44,11 @@ func (W *WORLD) spawnMob() {
 		mob.X, mob.Y = W.findSpawnPlace()
 		W.Map.Entities[mob.X][mob.Y] = mob
 		W.MobList[mob.ID] = mob
-		message := []byte(fmt.Sprintf("[NMOB]%s", mob.ID))
-		W.AOIs.addEvent(mob.X, mob.Y, message)
+		W.AOIs.addEntity(mob.X, mob.Y, mob)
 		// clog.Info("WORLD", "spawnMob", "Spawning new mob %s", mob.ID)
 		// mess := hub.NewMessage(nil, hub.ClientUser, nil, message)
 		// W.hub.Broadcast <- mess
+		clog.Test("World", "spawnMob", "New MOB:%s", mob)
 	}
 }
 
@@ -75,12 +77,12 @@ func (W *WORLD) findCloserUser(mob *MOB) (*USER, error) {
 	}
 }
 
-func (W *WORLD) sendMobPos(mob *MOB) {
-	json, _ := json.Marshal(mob)
-	message := []byte(fmt.Sprintf("[BCST]%s", json))
-	W.AOIs.addEvent(mob.X, mob.Y, message)
-	mob.waitState = mob.Speed
-}
+// func (W *WORLD) sendMobPos(mob *MOB) {
+// 	json, _ := json.Marshal(mob)
+// 	message := []byte(fmt.Sprintf("[BCST]%s", json))
+// 	W.AOIs.addEvent(mob.X, mob.Y, message)
+// 	mob.waitState = mob.Speed
+// }
 
 func (W *WORLD) tileIsFree(x, y int) bool {
 	if W.Map.Block[x][y] == 0 && W.Map.Entities[x][y] == nil {
@@ -96,7 +98,7 @@ func (W *WORLD) moveSIMPLE(mob *MOB, prey *USER) {
 		W.Map.Entities[mob.X][mob.Y] = nil
 		mob.Y -= 1
 		mob.Dir = "up"
-		W.sendMobPos(mob)
+		W.AOIs.moveEntity(mob.X, mob.Y, mob)
 		W.Map.Entities[mob.X][mob.Y] = mob
 		return
 	}
@@ -104,7 +106,7 @@ func (W *WORLD) moveSIMPLE(mob *MOB, prey *USER) {
 		W.Map.Entities[mob.X][mob.Y] = nil
 		mob.Y += 1
 		mob.Dir = "down"
-		W.sendMobPos(mob)
+		W.AOIs.moveEntity(mob.X, mob.Y, mob)
 		W.Map.Entities[mob.X][mob.Y] = mob
 		return
 	}
@@ -112,7 +114,7 @@ func (W *WORLD) moveSIMPLE(mob *MOB, prey *USER) {
 		W.Map.Entities[mob.X][mob.Y] = nil
 		mob.X -= 1
 		mob.Dir = "left"
-		W.sendMobPos(mob)
+		W.AOIs.moveEntity(mob.X, mob.Y, mob)
 		W.Map.Entities[mob.X][mob.Y] = mob
 		return
 	}
@@ -120,7 +122,7 @@ func (W *WORLD) moveSIMPLE(mob *MOB, prey *USER) {
 		W.Map.Entities[mob.X][mob.Y] = nil
 		mob.X += 1
 		mob.Dir = "right"
-		W.sendMobPos(mob)
+		W.AOIs.moveEntity(mob.X, mob.Y, mob)
 		W.Map.Entities[mob.X][mob.Y] = mob
 		return
 	}
@@ -167,8 +169,8 @@ func (W *WORLD) DropUser(id string) {
 	user := W.UserList[id]
 	dat, _ := json.Marshal(user)
 	storage.SaveUser(id, dat)
-	message := []byte(fmt.Sprintf("[KILL]%s", id))
-	W.AOIs.addEvent(user.X, user.Y, message)
+
+	W.AOIs.dropEntity(user.X, user.Y, user)
 
 	W.Map.Entities[user.X][user.Y] = nil
 	delete(W.UserList, id)
@@ -206,9 +208,7 @@ func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
 	infos.hubClient = c
 	W.UserList[infos.ID] = infos
 	W.Map.Entities[infos.X][infos.Y] = infos
-
-	message := []byte(fmt.Sprintf("[BCST]%s", dat))
-	W.AOIs.addEvent(infos.X, infos.Y, message)
+	W.AOIs.addEntity(infos.X, infos.Y, infos)
 	return dat, nil
 }
 
@@ -245,8 +245,7 @@ func (W *WORLD) checkTargetHit(infos *USER) {
 		}
 	}
 	if mobFound != nil {
-		message := []byte(fmt.Sprintf("[KILL]%s", mobFound.ID))
-		W.AOIs.addEvent(mobFound.X, mobFound.Y, message)
+		W.AOIs.dropEntity(mobFound.X, mobFound.Y, mobFound)
 		delete(W.MobList, mobFound.ID)
 		W.Map.Entities[mobFound.X][mobFound.Y] = nil
 	}

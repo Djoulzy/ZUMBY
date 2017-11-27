@@ -14,7 +14,7 @@ var Connection = function (addr, callback) {
     ws.onmessage = function(evt) {
 		var cmd = evt.data.split("|");
 		var len = cmd.length
-		// console.log(len+" CMD received ...")
+		// console.log(cmd)
 		for (var i = 0; i < len; i++) {
 	    	switch(cmd[i].substr(0, 6))
 	    	{
@@ -33,16 +33,16 @@ var Connection = function (addr, callback) {
                     if (connEvt["enemy_move"]) connEvt["enemy_move"](obj);
 	                break;
 				case "[KILL]":
+	                // console.log(cmd[i].substr(6));
 					connEvt["kill_enemy"](cmd[i].substr(6));
 	                break;
-				case "[NUSR]":
-					// obj = JSON.parse(evt.data.substr(6));
+				case "[NENT]":
+					var obj = JSON.parse(cmd[i].substr(6));
 					// obj = evt.data.substr(6);
-	                // console.log("RCPT: "+obj);
-					// connEvt["new_enemyPlayer"].call(this, obj);
-					// break;
+					connEvt["new_entity"](obj);
+					break;
 				case "[WLCM]":
-					console.log(cmd[i])
+					// console.log(cmd[i])
 					var obj = JSON.parse(cmd[i].substr(6))
 					connEvt["userlogged"](obj)
 					break;

@@ -1,6 +1,7 @@
 package world
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Djoulzy/ZUMBY/hub"
@@ -12,7 +13,7 @@ const (
 	AOIWidth  = 30
 	AOIHeight = 30
 	mobSpeed  = 8
-	maxMobNum = 1000
+	maxMobNum = 5
 )
 
 type Entity struct {
@@ -25,7 +26,8 @@ type Entity struct {
 	Y         int    `bson:"y" json:"y"` // Row nums
 	Pow       int    `bson:"pow" json:"pow"`
 	Speed     int    `bson:"spd" json:"spd"`
-	waitState int
+	AOI       *AOI   `bson:"-" json:"-"`
+	waitState int    `bson:"-" json:"-"`
 }
 
 type Attributes struct {
@@ -66,4 +68,8 @@ type WORLD struct {
 	UserList map[string]*USER
 	Map      *MapData
 	AOIs     *AOIList
+}
+
+func (E Entity) String() string {
+	return fmt.Sprintf("\nID: %s [%s - %s]\nCoord: %dx%d - %s\nAOI: %s", E.ID, E.Type, E.Face, E.X, E.Y, E.Dir, E.AOI)
 }

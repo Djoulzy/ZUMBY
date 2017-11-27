@@ -2,6 +2,7 @@ package world
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -9,12 +10,12 @@ import (
 )
 
 type AOI struct {
-	X         int
-	Y         int
-	Adjacents []*AOI
-	// Items     []ITEM
-	Actions [][]byte
-	update  []byte
+	X            int
+	Y            int
+	Adjacents    []*AOI
+	EntitiesList map[string]interface{}
+	Actions      [][]byte
+	update       []byte
 }
 
 type AOIList [][]*AOI
@@ -30,8 +31,9 @@ func BuildAOIList(W *WORLD) *AOIList {
 		L[i] = make([]*AOI, height)
 		for j := 0; j < height; j++ {
 			L[i][j] = &AOI{
-				X: i,
-				Y: j,
+				X:            i,
+				Y:            j,
+				EntitiesList: make(map[string]interface{}),
 			}
 		}
 	}
@@ -70,17 +72,23 @@ func (L AOIList) String() string {
 	return str
 }
 
-func (L AOIList) getAOIfromCoord(x, y int) *AOI {
-	AOIx := x / AOIWidth
-	AOIy := y / AOIHeight
-	return L[AOIx][AOIy]
-}
-
 func (aoi *AOI) addEvent(mess []byte) {
 	for _, adj := range aoi.Adjacents {
 		adj.Actions = append(adj.Actions, mess)
 	}
 	aoi.Actions = append(aoi.Actions, mess)
+}
+
+func (aoi *AOI) addEntity(entity interface{}) {
+	if typedEnt, ok := entity.(*MOB); ok {
+		typedEnt.AOI = aoi
+		aoi.EntitiesList[typedEnt.ID] = entity
+	} else {
+		if typedEnt, ok := entity.(*USER); ok {
+			typedEnt.AOI = aoi
+			aoi.EntitiesList[typedEnt.ID] = entity
+		}
+	}
 }
 
 // func (L *AOIList) addItemsToAOI(items [][]ITEM) {
@@ -92,6 +100,54 @@ func (aoi *AOI) addEvent(mess []byte) {
 // 		}
 // 	}
 // }
+
+func (L *AOIList) moveEntity(x, y int, entity interface{}) {
+	aoi := L.getAOIfromCoord(x, y)
+	if typedEnt, ok := entity.(*MOB); ok {
+		if typedEnt.AOI != aoi {
+			typedEnt.AOI = nil
+			aoi.EntitiesList[typedEnt.ID] = nil
+			aoi.addEntity(entity)
+		}
+		typedEnt.waitState = typedEnt.Speed
+	} else {
+		if typedEnt, ok := entity.(*USER); ok {
+			if typedEnt.AOI != aoi {
+				typedEnt.AOI = nil
+				aoi.EntitiesList[typedEnt.ID] = nil
+				aoi.addEntity(entity)
+			}
+		}
+	}
+	json, _ := json.Marshal(entity)
+	message := []byte(fmt.Sprintf("[BCST]%s", json))
+	aoi.addEvent(message)
+}
+
+func (L *AOIList) addEntity(x, y int, entity interface{}) {
+	aoi := L.getAOIfromCoord(x, y)
+	aoi.addEntity(entity)
+	json, _ := json.Marshal(entity)
+	message := []byte(fmt.Sprintf("[NENT]%s", json))
+	aoi.addEvent(message)
+}
+
+func (L *AOIList) dropEntity(x, y int, entity interface{}) {
+	var message []byte
+	aoi := L.getAOIfromCoord(x, y)
+	if typedEnt, ok := entity.(*MOB); ok {
+		typedEnt.AOI = nil
+		aoi.EntitiesList[typedEnt.ID] = nil
+		message = []byte(fmt.Sprintf("[KILL]%s", typedEnt.ID))
+	} else {
+		if typedEnt, ok := entity.(*USER); ok {
+			typedEnt.AOI = nil
+			aoi.EntitiesList[typedEnt.ID] = nil
+			message = []byte(fmt.Sprintf("[KILL]%s", typedEnt.ID))
+		}
+	}
+	aoi.addEvent(message)
+}
 
 func (L *AOIList) addEvent(x, y int, mess []byte) {
 	aoi := L.getAOIfromCoord(x, y)
@@ -107,11 +163,11 @@ func (L AOIList) computeUpdates() {
 	}
 }
 
-// func (L *AOIList) getAOISetupForPlayer(x, y int) {
-// 	aoi := L.getAOIfromCoord(x, y)
-// 	for _, adj := range aoi.Adjacents {
-// 	}
-// }
+func (L AOIList) getAOIfromCoord(x, y int) *AOI {
+	AOIx := x / AOIWidth
+	AOIy := y / AOIHeight
+	return L[AOIx][AOIy]
+}
 
 func (L *AOIList) getUpdateForPlayer(x, y int) ([]byte, error) {
 	aoi := L.getAOIfromCoord(x, y)

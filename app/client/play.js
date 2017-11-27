@@ -47,8 +47,6 @@ Play.prototype = {
 	initSocket: function() {
 		this.game.socket = new Connection(Config.MMOServer.Host, this.onSocketConnected.bind(this))
        	this.game.socket.on("userlogged", this.onUserLogged.bind(this))
-      	this.game.socket.on("enemy_move", this.onEnemyMove.bind(this));
-      	this.game.socket.on("kill_enemy", this.onRemoveEntity.bind(this));
     },
 
 	findGetParameter: function(parameterName) {
@@ -71,6 +69,10 @@ Play.prototype = {
 		this.game.player = new Local(this.game, data.id, data.png, data.x, data.y)
 		this.game.player.setAttr(data)
 		this.running = true
+
+		this.game.socket.on("new_entity", this.newEntitie.bind(this))
+      	this.game.socket.on("enemy_move", this.onEnemyMove.bind(this));
+      	this.game.socket.on("kill_enemy", this.onRemoveEntity.bind(this));
     },
 
 ////////////////////////////////////////////////////
@@ -86,7 +88,9 @@ Play.prototype = {
 	},
 
 	newEntitie: function(data) {
+		if (data.id == this.game.Properties.pseudo) return
 		var movePlayer = this.findplayerbyid(data.id);
+		console.log("New Entity: "+data.id)
 		if (this.findplayerbyid(data.id)) return
 		else {
 			if (data.typ == "P") {
@@ -135,7 +139,7 @@ Play.prototype = {
     			else if (this.cursors.right.isDown) this.game.player.moveRight(this.game.Properties.step, this.game.Properties.speed)
     			else if (this.cursors.up.isDown) this.game.player.moveUp(this.game.Properties.step, this.game.Properties.speed)
     			else if (this.cursors.down.isDown) this.game.player.moveDown(this.game.Properties.step, this.game.Properties.speed)
-				else if (this.cursors.p.isDown) console.log("P")
+				// else if (this.cursors.p.isDown) console.log("P")
     			else if (this.cursors.space.isDown) {
     				var portee = 5
     				this.bullets.fire(this.game.player, portee, this.game.Properties.speed);
