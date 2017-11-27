@@ -206,6 +206,11 @@ func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
 	}
 
 	infos.hubClient = c
+
+	message := W.AOIs.getAOIEntities(infos.X, infos.Y)
+	mess := hub.NewMessage(nil, hub.ClientUser, c, message)
+	W.hub.Unicast <- mess
+
 	W.UserList[infos.ID] = infos
 	W.Map.Entities[infos.X][infos.Y] = infos
 	W.AOIs.addEntity(infos.X, infos.Y, infos)
