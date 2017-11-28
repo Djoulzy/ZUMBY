@@ -179,14 +179,17 @@ func (L *AOIList) getUpdateForPlayer(x, y int) ([]byte, error) {
 }
 
 func (L *AOIList) getAOIEntities(x, y int) []byte {
-	var updates bytes.Buffer
+	var updates string
 	aoi := L.getAOIfromCoord(x, y)
 	for _, adj := range aoi.Adjacents {
 		for _, ent := range adj.EntitiesList {
 			json, _ := json.Marshal(ent)
-			updates.WriteString(fmt.Sprintf("|[NENT]%s", json))
+			updates = fmt.Sprintf("%s|[NENT]%s", updates, json)
 		}
 	}
-	clog.Test("AOI", "getAOIEntities", "%s", updates.Bytes())
-	return updates.Bytes()
+	for _, ent := range aoi.EntitiesList {
+		json, _ := json.Marshal(ent)
+		updates = fmt.Sprintf("%s|[NENT]%s", updates, json)
+	}
+	return []byte(updates)
 }

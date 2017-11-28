@@ -48,7 +48,6 @@ func (W *WORLD) spawnMob() {
 		// clog.Info("WORLD", "spawnMob", "Spawning new mob %s", mob.ID)
 		// mess := hub.NewMessage(nil, hub.ClientUser, nil, message)
 		// W.hub.Broadcast <- mess
-		clog.Test("World", "spawnMob", "New MOB:%s", mob)
 	}
 }
 
@@ -196,7 +195,6 @@ func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
 		storage.SaveUser(c.Name, dat)
 		clog.Warn("World", "logUser", "Creating new user %s", dat)
 	} else {
-		clog.Test("", "", "%s", dat)
 		err := json.Unmarshal(dat, &infos)
 		if err != nil {
 			clog.Error("World", "logUser", "Corrupted data for user %s : %s", c.Name, err)
@@ -209,6 +207,7 @@ func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
 
 	message := W.AOIs.getAOIEntities(infos.X, infos.Y)
 	mess := hub.NewMessage(nil, hub.ClientUser, c, message)
+	clog.Test("World", "LogUser", "%s", message)
 	W.hub.Unicast <- mess
 
 	W.UserList[infos.ID] = infos
