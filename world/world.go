@@ -270,8 +270,18 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 			W.Map.Entities[user.X][user.Y] = user
 			mess := []byte(fmt.Sprintf("[BCST]%s", message))
 			W.AOIs.addEvent(infos.X, infos.Y, mess)
-		// case "[LAOI]":
-		// 	W.AOIs.getAOISetupForPlayer(infos.X, infos.Y)
+			// case "[LAOI]":
+			// 	W.AOIs.getAOISetupForPlayer(infos.X, infos.Y)
+		case "[PICK]":
+			if W.Map.Items[infos.X][infos.Y].ID != 0 {
+				clog.Test("World", "CallToAction", "Player %s pick item %d", infos.ID, W.Map.Items[infos.X][infos.Y].ID)
+				user := W.UserList[infos.ID]
+				user.Inventory = append(user.Inventory, W.Map.Items[infos.X][infos.Y])
+				json, _ := json.Marshal(W.Map.Items[infos.X][infos.Y])
+				mess := []byte(fmt.Sprintf("[HIDE]%s", json))
+				W.AOIs.addEvent(infos.X, infos.Y, mess)
+				W.Map.Items[infos.X][infos.Y] = ITEM{}
+			}
 		default:
 			clog.Warn("World", "CallToAction", "Bad Action : %s", cmd)
 		}

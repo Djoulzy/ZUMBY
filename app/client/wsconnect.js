@@ -38,8 +38,11 @@ var Connection = function (addr, callback) {
 	                break;
 				case "[NENT]":
 					var obj = JSON.parse(cmd[i].substr(6));
-					console.log(obj);
 					connEvt["new_entity"](obj);
+					break;
+				case "[HIDE]":
+					var obj = JSON.parse(cmd[i].substr(6));
+					connEvt["hide_item"](obj);
 					break;
 				case "[WLCM]":
 					// console.log(cmd[i])
@@ -100,6 +103,10 @@ var Connection = function (addr, callback) {
 		// console.log(message);
         ws.send("[NUSR]" + JSON.stringify(message))
     }
+
+	this.playerGetItem = function(message) {
+		ws.send("[PICK]" + JSON.stringify(message))
+	}
 }
 
 module.exports = Connection;

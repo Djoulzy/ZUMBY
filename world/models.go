@@ -41,16 +41,17 @@ type Attributes struct {
 	Grow   int `bson:"grw" json:"grw"`
 }
 
-type USER struct {
-	hubClient *hub.Client
-	Entity
-	Attributes
-}
-
 type ITEM struct {
 	ID int `bson:"id" json:"id"`
 	X  int `bson:"x" json:"x"` // Col nums
 	Y  int `bson:"y" json:"y"` // Row nums
+}
+
+type USER struct {
+	hubClient *hub.Client
+	Entity
+	Attributes
+	Inventory []ITEM `bson:"i" json:"i"`
 }
 
 type MOB struct {

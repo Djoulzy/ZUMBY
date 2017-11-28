@@ -57,6 +57,22 @@ class Area
 		return result
 	}
 
+	getItemValueAt(x, y) {
+		var result = 0
+		var newX = x - (this.hauteurs.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
+		var newY = y - (this.hauteurs.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
+		var tmp = this.data.getTile(newX, newY, this.hauteurs)
+		if (tmp != null) result = tmp.index
+		// console.log("Tile for : "+x+"x"+y+" converted to: "+newX+"x"+newY+" = "+result)
+		return result
+	}
+
+	removeTileAt(x, y) {
+		var newX = x - (this.hauteurs.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
+		var newY = y - (this.hauteurs.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
+		this.data.removeTile(newX, newY, this.hauteurs)
+	}
+
 	destroy() {
 		if (this.status == 2) {
 			this.terrain.destroy()
@@ -101,6 +117,14 @@ class Map
 
     getTileInArea(x, y) {
 		return this.WorldMap.getTileValueAt(x, y)
+	}
+
+	getItemInArea(x, y) {
+		return this.WorldMap.getItemValueAt(x, y)
+	}
+
+	removeTileInArea(x, y) {
+		this.WorldMap.removeTileAt(x, y)
 	}
 }
 

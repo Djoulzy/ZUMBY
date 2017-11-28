@@ -19,9 +19,12 @@ Play.prototype = {
 		this.game.physics.startSystem(Phaser.Physics.ARCADE);
 		this.running = false
 		this.cursors = this.game.input.keyboard.addKeys({
+			'pickup': Phaser.Keyboard.P,
 			'space': Phaser.Keyboard.SPACEBAR,
 			'up': Phaser.Keyboard.UP,
-			'down': Phaser.Keyboard.DOWN, 'left': Phaser.Keyboard.LEFT, 'right': Phaser.Keyboard.RIGHT })
+			'down': Phaser.Keyboard.DOWN,
+			'left': Phaser.Keyboard.LEFT,
+			'right': Phaser.Keyboard.RIGHT })
         this.game.DynLoad = new DynLoad(this.game)
 
 		this.entities = [];
@@ -50,6 +53,7 @@ Play.prototype = {
 		this.game.socket.on("new_entity", this.newEntitie.bind(this))
       	this.game.socket.on("enemy_move", this.onEnemyMove.bind(this));
       	this.game.socket.on("kill_enemy", this.onRemoveEntity.bind(this));
+      	this.game.socket.on("hide_item", this.onRemoveItem.bind(this));
     },
 
 	findGetParameter: function(parameterName) {
@@ -77,6 +81,11 @@ Play.prototype = {
       	// this.game.socket.on("enemy_move", this.onEnemyMove.bind(this));
       	// this.game.socket.on("kill_enemy", this.onRemoveEntity.bind(this));
     },
+
+	onRemoveItem: function(data) {
+		console.log(data)
+		this.game.WorldMap.removeTileInArea(data.x, data.y)
+	},
 
 ////////////////////////////////////////////////////
 //                      PLAYERS                   //
@@ -142,7 +151,7 @@ Play.prototype = {
     			else if (this.cursors.right.isDown) this.game.player.moveRight(this.game.Properties.step, this.game.Properties.speed)
     			else if (this.cursors.up.isDown) this.game.player.moveUp(this.game.Properties.step, this.game.Properties.speed)
     			else if (this.cursors.down.isDown) this.game.player.moveDown(this.game.Properties.step, this.game.Properties.speed)
-				// else if (this.cursors.p.isDown) console.log("P")
+				else if (this.cursors.pickup.isDown) this.game.player.getItem()
     			else if (this.cursors.space.isDown) {
     				var portee = 5
     				this.bullets.fire(this.game.player, portee, this.game.Properties.speed);

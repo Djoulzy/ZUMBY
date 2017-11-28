@@ -136,6 +136,17 @@ class Local extends User
 			this.sprite.frame = 1;
 		}
 	}
+
+	getItem() {
+		if (this.game.WorldMap.getItemInArea(this.X, this.Y) != 0) {
+			this.game.socket.playerGetItem({
+				typ: "P",
+				id: this.User_id,
+				x: this.X,
+				y: this.Y
+			})
+		}
+	}
 }
 
 module.exports = Local
