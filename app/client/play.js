@@ -47,6 +47,9 @@ Play.prototype = {
 	initSocket: function() {
 		this.game.socket = new Connection(Config.MMOServer.Host, this.onSocketConnected.bind(this))
        	this.game.socket.on("userlogged", this.onUserLogged.bind(this))
+		this.game.socket.on("new_entity", this.newEntitie.bind(this))
+      	this.game.socket.on("enemy_move", this.onEnemyMove.bind(this));
+      	this.game.socket.on("kill_enemy", this.onRemoveEntity.bind(this));
     },
 
 	findGetParameter: function(parameterName) {
@@ -70,9 +73,9 @@ Play.prototype = {
 		this.game.player.setAttr(data)
 		this.running = true
 
-		this.game.socket.on("new_entity", this.newEntitie.bind(this))
-      	this.game.socket.on("enemy_move", this.onEnemyMove.bind(this));
-      	this.game.socket.on("kill_enemy", this.onRemoveEntity.bind(this));
+		// this.game.socket.on("new_entity", this.newEntitie.bind(this))
+      	// this.game.socket.on("enemy_move", this.onEnemyMove.bind(this));
+      	// this.game.socket.on("kill_enemy", this.onRemoveEntity.bind(this));
     },
 
 ////////////////////////////////////////////////////

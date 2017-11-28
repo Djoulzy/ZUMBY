@@ -106,7 +106,7 @@ func (L *AOIList) moveEntity(x, y int, entity interface{}) {
 	if typedEnt, ok := entity.(*MOB); ok {
 		if typedEnt.AOI != aoi {
 			typedEnt.AOI = nil
-			aoi.EntitiesList[typedEnt.ID] = nil
+			delete(aoi.EntitiesList, typedEnt.ID)
 			aoi.addEntity(entity)
 		}
 		typedEnt.waitState = typedEnt.Speed
@@ -114,7 +114,7 @@ func (L *AOIList) moveEntity(x, y int, entity interface{}) {
 		if typedEnt, ok := entity.(*USER); ok {
 			if typedEnt.AOI != aoi {
 				typedEnt.AOI = nil
-				aoi.EntitiesList[typedEnt.ID] = nil
+				delete(aoi.EntitiesList, typedEnt.ID)
 				aoi.addEntity(entity)
 			}
 		}
@@ -137,12 +137,12 @@ func (L *AOIList) dropEntity(x, y int, entity interface{}) {
 	aoi := L.getAOIfromCoord(x, y)
 	if typedEnt, ok := entity.(*MOB); ok {
 		typedEnt.AOI = nil
-		aoi.EntitiesList[typedEnt.ID] = nil
+		delete(aoi.EntitiesList, typedEnt.ID)
 		message = []byte(fmt.Sprintf("[KILL]%s", typedEnt.ID))
 	} else {
 		if typedEnt, ok := entity.(*USER); ok {
 			typedEnt.AOI = nil
-			aoi.EntitiesList[typedEnt.ID] = nil
+			delete(aoi.EntitiesList, typedEnt.ID)
 			message = []byte(fmt.Sprintf("[KILL]%s", typedEnt.ID))
 		}
 	}
@@ -179,17 +179,17 @@ func (L *AOIList) getUpdateForPlayer(x, y int) ([]byte, error) {
 }
 
 func (L *AOIList) getAOIEntities(x, y int) []byte {
-	var updates string
+	var updates [][]byte
 	aoi := L.getAOIfromCoord(x, y)
 	for _, adj := range aoi.Adjacents {
 		for _, ent := range adj.EntitiesList {
 			json, _ := json.Marshal(ent)
-			updates = fmt.Sprintf("%s|[NENT]%s", updates, json)
+			updates = append(updates, append([]byte("[NENT]"), json...))
 		}
 	}
 	for _, ent := range aoi.EntitiesList {
 		json, _ := json.Marshal(ent)
-		updates = fmt.Sprintf("%s|[NENT]%s", updates, json)
+		updates = append(updates, append([]byte("[NENT]"), json...))
 	}
-	return []byte(updates)
+	return bytes.Join(updates, []byte("|"))
 }

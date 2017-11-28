@@ -38,7 +38,7 @@ var Connection = function (addr, callback) {
 	                break;
 				case "[NENT]":
 					var obj = JSON.parse(cmd[i].substr(6));
-					// obj = evt.data.substr(6);
+					console.log(obj);
 					connEvt["new_entity"](obj);
 					break;
 				case "[WLCM]":
