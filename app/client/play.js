@@ -10,6 +10,7 @@ var Remote = require('client/remote')
 var Mob = require('client/mob')
 var Shoot = require('client/shoot')
 var Explode = require('client/explode')
+var Items = require('client/items')
 
 function Play(){}
 
@@ -36,6 +37,7 @@ Play.prototype = {
 		this.initSocket()
 		this.bullets = new Shoot(this.game)
 		this.explode = new Explode(this.game)
+		this.inventory = new Items(this.game)
 
 		this.game.WorldMap = new WMap(this.game)
 		this.game.OSD = new OSD(this.game)
@@ -85,6 +87,7 @@ Play.prototype = {
 	onRemoveItem: function(data) {
 		console.log(data)
 		this.game.WorldMap.removeTileInArea(data.x, data.y)
+		this.inventory.add(151)
 	},
 
 ////////////////////////////////////////////////////

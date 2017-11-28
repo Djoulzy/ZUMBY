@@ -28,7 +28,19 @@ var ScaleList *scaling.ServersList
 var zeWorld *world.WORLD
 var zeHub *hub.Hub
 
-func maxOpenFiles() int {
+func setMaxProcs(nb int) {
+	var procs int
+	if nb == 0 {
+		procs = runtime.NumCPU()
+		runtime.GOMAXPROCS(procs)
+	} else {
+		procs = nb
+		runtime.GOMAXPROCS(procs)
+	}
+	clog.Output("Using %d CPUs.", runtime.GOMAXPROCS(procs))
+}
+
+func maxOpenFiles(max uint64) int {
 	var rLimit syscall.Rlimit
 
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
@@ -36,6 +48,10 @@ func maxOpenFiles() int {
 		clog.Error("server", "maxOpenFiles", "Error Getting Rlimit %s", err)
 	}
 
+	if max != 0 {
+		rLimit.Cur = max - 1
+		rLimit.Max = max
+	}
 	if rLimit.Cur < rLimit.Max {
 		rLimit.Cur = rLimit.Max
 		err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
@@ -43,7 +59,7 @@ func maxOpenFiles() int {
 			clog.Error("server", "maxOpenFiles", "Error Setting Rlimit %s", err)
 		}
 	}
-
+	clog.Output("Setting maxOpenFiles to %d.", rLimit.Cur)
 	return int(rLimit.Cur)
 }
 
@@ -54,9 +70,8 @@ func main() {
 	clog.StartLogging = conf.StartLogging
 
 	// System Optims
-	clog.Output("Using %d CPUs.", runtime.GOMAXPROCS(runtime.NumCPU()))
-	maxFiles := maxOpenFiles()
-	clog.Output("Setting maxOpenFiles to %d.", maxFiles)
+	setMaxProcs(2)
+	maxFiles := maxOpenFiles(4096)
 	////////////////
 
 	totalConn := conf.MaxUsersConns + conf.MaxMonitorsConns + conf.MaxServersConns + conf.MaxIncommingConns

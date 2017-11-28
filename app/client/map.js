@@ -43,6 +43,7 @@ class Area
 			this.game.backLayer.add(this.obstacles)
 			this.game.frontLayer.add(this.hauteurs)
 
+			// this.game.frontLayer.sort();
 			this.status = 2
 		}
 	}
