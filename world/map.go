@@ -234,13 +234,53 @@ func (M *MapData) buildMonPage(AOIWidth, AOIHeight int) {
 	var area string = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon</title></head><body>"
 	for y := 0; y < (M.Height / AOIHeight); y++ {
 		for x := 0; x < (M.Width / AOIWidth); x++ {
-			area = fmt.Sprintf("%s\n<AREA shape='rect' coords='%d,%d,%d,%d' href='assets/mon.png'>", area, x*AOIWidth*32, y*AOIHeight*32, (x+1)*AOIWidth*32, (y+1)*AOIHeight*32)
+			area = fmt.Sprintf("%s\n<AREA shape='rect' coords='%d,%d,%d,%d' href='assets/%d_%d.png'>", area, x*AOIWidth*32, y*AOIHeight*32, (x+1)*AOIWidth*32, (y+1)*AOIHeight*32, x, y)
 		}
 	}
 	area = fmt.Sprintf("%s\n<img USEMAP='#map' src='assets/mon.png' /></body></html>", area)
 	f, _ := os.OpenFile("../public/mon.html", os.O_WRONLY|os.O_CREATE, 0600)
 	defer f.Close()
 	f.WriteString(area)
+}
+
+func drawRect(img *image.RGBA, x, y, width, height int, c color.Color) {
+	for ry := 0; ry < height; ry++ {
+		for rx := 0; rx < width; rx++ {
+			img.Set(x+rx, y+ry, c)
+		}
+	}
+}
+
+func (M *MapData) genAOI(x, y, AOIWidth, AOIHeight int) {
+	pixel := 11
+	img := image.NewRGBA(image.Rect(0, 0, AOIWidth*pixel, AOIHeight*pixel))
+
+	startx := x * AOIWidth
+	starty := y * AOIHeight
+
+	for aoiy := 0; aoiy < AOIHeight; aoiy++ {
+		for aoix := 0; aoix < AOIWidth; aoix++ {
+			val := M.Block[startx+aoix][starty+aoiy]
+			if val == 0 {
+				drawRect(img, aoix*pixel, aoiy*pixel, pixel, pixel, color.RGBA{0, 0, 0, 255})
+			} else {
+				drawRect(img, aoix*pixel, aoiy*pixel, pixel, pixel, color.RGBA{255, 255, 255, 255})
+			}
+			if M.Entities[startx+aoix][starty+aoiy] != nil {
+				switch M.Entities[startx+aoix][starty+aoiy].(type) {
+				case *MOB:
+					drawRect(img, aoix*pixel, aoiy*pixel, pixel, pixel, color.RGBA{255, 0, 0, 255})
+				case *USER:
+					drawRect(img, aoix*pixel, aoiy*pixel, pixel, pixel, color.RGBA{0, 255, 0, 255})
+				}
+			}
+		}
+	}
+
+	// Save to out.png
+	f, _ := os.OpenFile("../public/assets/0_0.png", os.O_WRONLY|os.O_CREATE, 0600)
+	defer f.Close()
+	png.Encode(f, img)
 }
 
 func (M *MapData) genImage() {

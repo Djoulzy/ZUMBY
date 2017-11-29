@@ -38,7 +38,7 @@ func setMaxProcs(nb int) {
 		procs = nb
 		runtime.GOMAXPROCS(procs)
 	}
-	clog.Output("Using %d CPUs.", runtime.GOMAXPROCS(procs))
+	clog.Output("Using %d CPUs on %d.", runtime.GOMAXPROCS(procs), runtime.NumCPU())
 }
 
 func maxOpenFiles(max uint64) int {

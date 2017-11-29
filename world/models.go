@@ -2,6 +2,7 @@ package world
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Djoulzy/ZUMBY/hub"
 )
@@ -59,7 +60,7 @@ type WORLD struct {
 	UserList  map[string]*USER
 	Map       *MapData
 	AOIs      *AOIList
-	TimeStep  int
+	TimeStep  time.Duration
 	TileSize  int
 	AOIWidth  int
 	AOIHeight int

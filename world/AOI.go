@@ -12,6 +12,8 @@ import (
 type AOI struct {
 	X            int
 	Y            int
+	Width        int
+	Height       int
 	Adjacents    []*AOI
 	EntitiesList map[string]interface{}
 	Actions      [][]byte
@@ -21,8 +23,8 @@ type AOI struct {
 type AOIList [][]*AOI
 
 func BuildAOIList(W *WORLD) *AOIList {
-	width := W.Map.Width / AOIWidth
-	height := W.Map.Height / AOIHeight
+	width := W.Map.Width / W.AOIWidth
+	height := W.Map.Height / W.AOIHeight
 	clog.Info("AOI", "BuildAOIList", "Map Size: %dx%d -> AOIList: %dx%d", W.Map.Width, W.Map.Height, width, height)
 
 	var L AOIList
@@ -33,6 +35,8 @@ func BuildAOIList(W *WORLD) *AOIList {
 			L[i][j] = &AOI{
 				X:            i,
 				Y:            j,
+				Width:        W.AOIWidth,
+				Height:       W.AOIHeight,
 				EntitiesList: make(map[string]interface{}),
 			}
 		}
@@ -164,8 +168,8 @@ func (L AOIList) computeUpdates() {
 }
 
 func (L AOIList) getAOIfromCoord(x, y int) *AOI {
-	AOIx := x / AOIWidth
-	AOIy := y / AOIHeight
+	AOIx := x / L[0][0].Width
+	AOIy := y / L[0][0].Height
 	return L[AOIx][AOIy]
 }
 

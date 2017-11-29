@@ -303,7 +303,7 @@ func (W *WORLD) sendWorldUpdate() {
 }
 
 func (W *WORLD) Run() {
-	ticker := time.NewTicker(timeStep)
+	ticker := time.NewTicker(W.TimeStep)
 	defer func() {
 		ticker.Stop()
 	}()
@@ -311,19 +311,20 @@ func (W *WORLD) Run() {
 	for {
 		select {
 		case <-ticker.C:
-			// start := time.Now()
+			start := time.Now()
 			W.spawnMob()
 			W.browseMob()
 			if clog.LogLevel == 0 {
 				W.Map.Draw()
 			}
 			W.sendWorldUpdate()
-			W.Map.genImage()
+			W.Map.genAOI(0, 0, W.AOIWidth, W.AOIHeight)
 
-			// t := time.Now()
-			// elapsed := t.Sub(start)
-			// if elapsed >= timeStep {
-			// 	clog.Error("", "", "Operations too long !!")
+			t := time.Now()
+			elapsed := t.Sub(start)
+			if elapsed >= W.TimeStep {
+				clog.Warn("World", "Run", "Operations too long: %s !!", elapsed)
+			}
 			// } else {
 			// 	clog.Test("", "", "%c[HOperation last %s", 27, elapsed)
 			// }
@@ -333,7 +334,7 @@ func (W *WORLD) Run() {
 }
 
 func (W *WORLD) GetMapArea(x, y int) []byte {
-	return W.Map.ExportMapArea(x, y)
+	return W.Map.ExportMapArea(x, y, W.AOIWidth, W.AOIHeight)
 }
 
 // func (W *WORLD) getShortPath(mob *MOB, user *USER) *pathfinder.Node {
@@ -368,12 +369,10 @@ func getConfValue(iface interface{}, name string) interface{} {
 }
 
 func Init(zeHub *hub.Hub, conf []byte) *WORLD {
-	// AOIWidth = getConfValue(conf, "AOIWidth").(int)
-
 	zeWorld := &WORLD{}
 	json.Unmarshal(conf, zeWorld)
-	clog.Test("", "", "%+v", zeWorld)
-	zeWorld.TimeStep = zeWorld.TimeStep * int(time.Millisecond)
+
+	zeWorld.TimeStep = time.Duration(zeWorld.TimeStep) * time.Millisecond
 
 	zeWorld.MobList = make(map[string]*MOB)
 	zeWorld.UserList = make(map[string]*USER)
@@ -381,8 +380,8 @@ func Init(zeHub *hub.Hub, conf []byte) *WORLD {
 	zeWorld.Map = &MapData{}
 
 	zeWorld.Map.loadTiledJSONMap("../data/final.json")
-
 	zeWorld.AOIs = BuildAOIList(zeWorld)
+	zeWorld.Map.buildMonPage(zeWorld.AOIWidth, zeWorld.AOIHeight)
 	// zeWorld.AOIs.addItemsToAOI(zeWorld.Map.Items)
 
 	// clog.Trace("", "", "%s", zeWorld.AOIs)
