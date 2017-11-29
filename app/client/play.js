@@ -87,7 +87,7 @@ Play.prototype = {
 	onRemoveItem: function(data) {
 		console.log(data)
 		this.game.WorldMap.removeTileInArea(data.x, data.y)
-		this.inventory.add(151)
+		this.inventory.add(data.id)
 	},
 
 ////////////////////////////////////////////////////
