@@ -113,7 +113,7 @@ func (M *MapData) loadTiledJSONMap(file string) {
 	}
 }
 
-func (M *MapData) ExportMapArea(x, y int) []byte {
+func (M *MapData) ExportMapArea(x, y, AOIWidth, AOIHeight int) []byte {
 	var startx, starty int
 	tmp := M.FileData
 
@@ -230,8 +230,20 @@ func (M *MapData) Draw() {
 	fmt.Printf("%s", display)
 }
 
+func (M *MapData) buildMonPage(AOIWidth, AOIHeight int) {
+	var area string = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon</title></head><body>"
+	for y := 0; y < (M.Height / AOIHeight); y++ {
+		for x := 0; x < (M.Width / AOIWidth); x++ {
+			area = fmt.Sprintf("%s\n<AREA shape='rect' coords='%d,%d,%d,%d' href='assets/mon.png'>", area, x*AOIWidth*32, y*AOIHeight*32, (x+1)*AOIWidth*32, (y+1)*AOIHeight*32)
+		}
+	}
+	area = fmt.Sprintf("%s\n<img USEMAP='#map' src='assets/mon.png' /></body></html>", area)
+	f, _ := os.OpenFile("../public/mon.html", os.O_WRONLY|os.O_CREATE, 0600)
+	defer f.Close()
+	f.WriteString(area)
+}
+
 func (M *MapData) genImage() {
-	// Create an 100 x 50 image
 	img := image.NewRGBA(image.Rect(0, 0, M.Width, M.Height))
 
 	for y := 0; y < M.Height; y++ {

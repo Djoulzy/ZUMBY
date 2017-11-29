@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"reflect"
 	"time"
 
 	"github.com/Djoulzy/Tools/clog"
@@ -27,7 +28,7 @@ func (W *WORLD) findSpawnPlace() (int, int) {
 }
 
 func (W *WORLD) spawnMob() {
-	if len(W.MobList) < maxMobNum {
+	if len(W.MobList) < W.MaxMobNum {
 		rand.Seed(time.Now().UnixNano())
 		face := fmt.Sprintf("%d", rand.Intn(8))
 		uid, _ := uuid.NewV4()
@@ -37,7 +38,7 @@ func (W *WORLD) spawnMob() {
 				Type:      "M",
 				Face:      face,
 				ComID:     1,
-				Speed:     mobSpeed,
+				Speed:     W.MobSpeed,
 				waitState: 0,
 			},
 		}
@@ -355,9 +356,25 @@ func (W *WORLD) GetMapArea(x, y int) []byte {
 // 	}
 // 	W.DrawMap()
 // }
+func getConfValue(iface interface{}, name string) interface{} {
+	values := reflect.ValueOf(iface).Elem()
+	value := values.FieldByName(name)
+	clog.Test("", "", "%T", value.Kind().String())
+	switch value.Kind().String() {
+	case "int":
+		return int(value.Int())
+	}
+	return nil
+}
 
-func Init(zeHub *hub.Hub) *WORLD {
+func Init(zeHub *hub.Hub, conf []byte) *WORLD {
+	// AOIWidth = getConfValue(conf, "AOIWidth").(int)
+
 	zeWorld := &WORLD{}
+	json.Unmarshal(conf, zeWorld)
+	clog.Test("", "", "%+v", zeWorld)
+	zeWorld.TimeStep = zeWorld.TimeStep * int(time.Millisecond)
+
 	zeWorld.MobList = make(map[string]*MOB)
 	zeWorld.UserList = make(map[string]*USER)
 	zeWorld.hub = zeHub

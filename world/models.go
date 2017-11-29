@@ -2,18 +2,8 @@ package world
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/Djoulzy/ZUMBY/hub"
-)
-
-const (
-	timeStep  = 100 * time.Millisecond // Actualisation 10 par seconde
-	tileSize  = 32
-	AOIWidth  = 30
-	AOIHeight = 30
-	mobSpeed  = 8
-	maxMobNum = 5
 )
 
 type Entity struct {
@@ -64,11 +54,17 @@ type TILE struct {
 }
 
 type WORLD struct {
-	hub      *hub.Hub
-	MobList  map[string]*MOB
-	UserList map[string]*USER
-	Map      *MapData
-	AOIs     *AOIList
+	hub       *hub.Hub
+	MobList   map[string]*MOB
+	UserList  map[string]*USER
+	Map       *MapData
+	AOIs      *AOIList
+	TimeStep  int
+	TileSize  int
+	AOIWidth  int
+	AOIHeight int
+	MobSpeed  int
+	MaxMobNum int
 }
 
 func (E Entity) String() string {

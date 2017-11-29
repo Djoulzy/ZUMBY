@@ -44,6 +44,15 @@ type Encryption struct {
 	HEX_IV    string
 }
 
+type World struct {
+	TimeStep  int
+	TileSize  int
+	AOIWidth  int
+	AOIHeight int
+	MobSpeed  int
+	MaxMobNum int
+}
+
 type AppConfig struct {
 	ServerID
 	Globals
@@ -53,6 +62,7 @@ type AppConfig struct {
 	HTTPServerConfig
 	TCPServerConfig
 	Encryption
+	World
 }
 
 var conf *AppConfig = &AppConfig{
@@ -87,5 +97,13 @@ var conf *AppConfig = &AppConfig{
 		HASH_SIZE: 8,
 		HEX_KEY:   "0000000000000000000000000000000000000000000000000000000000000000",
 		HEX_IV:    "00000000000000000000000000000000",
+	},
+	World{
+		TimeStep:  100,
+		TileSize:  32,
+		AOIWidth:  30,
+		AOIHeight: 30,
+		MobSpeed:  8,
+		MaxMobNum: 5,
 	},
 }

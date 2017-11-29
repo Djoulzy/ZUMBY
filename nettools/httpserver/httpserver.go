@@ -45,6 +45,8 @@ type Manager struct {
 	Cryptor          *urlcrypt.Cypher
 	MapGenCallback   func(x, y int) []byte
 	ClientDisconnect func(string)
+	WorldWidth       int
+	WorldHeight      int
 }
 
 func (m *Manager) statusPage(w http.ResponseWriter, r *http.Request) {

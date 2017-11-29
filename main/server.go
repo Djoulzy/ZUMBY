@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"runtime"
 	"syscall"
 
@@ -89,8 +90,12 @@ func main() {
 		HEX_IV:    []byte(conf.HEX_IV),
 	}
 
+	conf_json, _ := json.Marshal(conf)
+
+	///////////////////////////////////////////////////////////////////////////
+
 	zeHub = hub.NewHub()
-	zeWorld = world.Init(zeHub)
+	zeWorld = world.Init(zeHub, conf_json)
 
 	mon_params := &monitoring.Params{
 		ServerID:          conf.Name,
@@ -131,6 +136,8 @@ func main() {
 		Cryptor:          Cryptor,
 		MapGenCallback:   zeWorld.GetMapArea,
 		ClientDisconnect: zeWorld.DropUser,
+		WorldWidth:       conf.AOIWidth,
+		WorldHeight:      conf.AOIHeight,
 	}
 	clog.Output("HTTP Server starting listening on %s", conf.HTTPaddr)
 	go HTTPManager.Start(http_params)
