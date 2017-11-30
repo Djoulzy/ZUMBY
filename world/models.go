@@ -33,9 +33,10 @@ type Attributes struct {
 }
 
 type ITEM struct {
-	ID int `bson:"id" json:"id"`
-	X  int `bson:"x" json:"x"` // Col nums
-	Y  int `bson:"y" json:"y"` // Row nums
+	ID    int    `bson:"id" json:"id"`
+	Owner string `bson:"owner" json:"owner"`
+	X     int    `bson:"x" json:"x"` // Col nums
+	Y     int    `bson:"y" json:"y"` // Row nums
 }
 
 type USER struct {

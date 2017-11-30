@@ -137,8 +137,8 @@ class Local extends User
 		}
 	}
 
-	getItem() {
-		if (this.game.WorldMap.getItemInArea(this.X, this.Y) != 0) {
+	getItem(inventory) {
+		if ((this.game.WorldMap.getItemInArea(this.X, this.Y) != 0) && (inventory.findEmptyZone() !== false)) {
 			this.game.socket.playerGetItem({
 				typ: "P",
 				id: this.User_id,

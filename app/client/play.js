@@ -10,7 +10,7 @@ var Remote = require('client/remote')
 var Mob = require('client/mob')
 var Shoot = require('client/shoot')
 var Explode = require('client/explode')
-var Items = require('client/items')
+var Bag = require('client/items')
 
 function Play(){}
 
@@ -37,7 +37,7 @@ Play.prototype = {
 		this.initSocket()
 		this.bullets = new Shoot(this.game)
 		this.explode = new Explode(this.game)
-		this.inventory = new Items(this.game)
+		this.inventory = new Bag(this.game, 10)
 
 		this.game.WorldMap = new WMap(this.game)
 		this.game.OSD = new OSD(this.game)
@@ -85,9 +85,10 @@ Play.prototype = {
     },
 
 	onRemoveItem: function(data) {
-		console.log(data)
 		this.game.WorldMap.removeTileInArea(data.x, data.y)
-		this.inventory.add(data.id)
+		if (data.owner == this.game.Properties.pseudo) {
+			this.inventory.addItem(data.id)
+		}
 	},
 
 ////////////////////////////////////////////////////
@@ -154,7 +155,7 @@ Play.prototype = {
     			else if (this.cursors.right.isDown) this.game.player.moveRight(this.game.Properties.step, this.game.Properties.speed)
     			else if (this.cursors.up.isDown) this.game.player.moveUp(this.game.Properties.step, this.game.Properties.speed)
     			else if (this.cursors.down.isDown) this.game.player.moveDown(this.game.Properties.step, this.game.Properties.speed)
-				else if (this.cursors.pickup.isDown) this.game.player.getItem()
+				else if (this.cursors.pickup.isDown) this.game.player.getItem(this.inventory)
     			else if (this.cursors.space.isDown) {
     				var portee = 5
     				this.bullets.fire(this.game.player, portee, this.game.Properties.speed);

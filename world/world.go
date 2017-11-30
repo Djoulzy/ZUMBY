@@ -277,6 +277,7 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 			if W.Map.Items[infos.X][infos.Y].ID != 0 {
 				clog.Test("World", "CallToAction", "Player %s pick item %d", infos.ID, W.Map.Items[infos.X][infos.Y].ID)
 				user := W.UserList[infos.ID]
+				W.Map.Items[infos.X][infos.Y].Owner = infos.ID
 				user.Inventory = append(user.Inventory, W.Map.Items[infos.X][infos.Y])
 				json, _ := json.Marshal(W.Map.Items[infos.X][infos.Y])
 				mess := []byte(fmt.Sprintf("[HIDE]%s", json))
