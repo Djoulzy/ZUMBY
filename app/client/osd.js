@@ -38,6 +38,7 @@ class OSD
 
 		// this.game.frontLayer.add(this.label_score)
 		this.game.frontLayer.add(this.cartouche)
+
 	}
 
 	refresh() {

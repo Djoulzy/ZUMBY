@@ -91,6 +91,10 @@ Play.prototype = {
 		}
 	},
 
+	onAddItem: function(data) {
+
+	},
+
 ////////////////////////////////////////////////////
 //                      PLAYERS                   //
 ////////////////////////////////////////////////////
@@ -102,6 +106,10 @@ Play.prototype = {
 		}
 		return false
 	},
+
+	// convertPixelsToTiled: function(x, y) {
+	// 	this.game.player.X
+	// },
 
 	newEntitie: function(data) {
 		if (data.id == this.game.Properties.pseudo) return
@@ -196,9 +204,13 @@ Play.prototype = {
     },
 
 	render: function() {
-			this.game.DynLoad.start()
-		// this.game.debug.spriteInfo(this.game.player.sprite, 32, 32);
-		// this.game.debug.cameraInfo(this.game.camera, 32, 500);
+		this.game.DynLoad.start()
+		if (this.running) {
+			if (this.game.player.inGame) {
+				this.game.debug.spriteInfo(this.game.player.sprite, 32, 32)
+			}
+		}
+		this.game.debug.cameraInfo(this.game.camera, 32, 500);
 
 		// var zone = this.game.camera.deadzone;
 	    // this.game.context.fillStyle = 'rgba(255,0,0,0.6)';

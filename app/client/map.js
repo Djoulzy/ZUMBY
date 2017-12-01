@@ -42,6 +42,7 @@ class Area
 			this.game.backLayer.add(this.terrain)
 			this.game.backLayer.add(this.obstacles)
 			this.game.frontLayer.add(this.hauteurs)
+			this.game.frontLayer.sendToBack(this.hauteurs)
 
 			// this.game.frontLayer.sort();
 			this.status = 2
@@ -121,6 +122,7 @@ class Map
 	}
 
 	getItemInArea(x, y) {
+		// console.log(x, y, this.WorldMap.getItemValueAt(x, y))
 		return this.WorldMap.getItemValueAt(x, y)
 	}
 
