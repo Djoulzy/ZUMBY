@@ -257,13 +257,19 @@ func (W *WORLD) checkTargetHit(infos *USER) {
 }
 
 func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
-	var infos USER
-	err := json.Unmarshal(message, &infos)
-	if err == nil {
-		switch cmd {
-		case "[FIRE]":
+	switch cmd {
+	case "[FIRE]":
+		var infos USER
+		err := json.Unmarshal(message, &infos)
+		if err == nil {
 			W.checkTargetHit(&infos)
-		case "[PMOV]":
+		} else {
+			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
+		}
+	case "[PMOV]":
+		var infos USER
+		err := json.Unmarshal(message, &infos)
+		if err == nil {
 			user := W.UserList[infos.ID]
 			W.Map.Entities[user.X][user.Y] = nil
 			user.X = infos.X
@@ -273,7 +279,13 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 			W.AOIs.addEvent(infos.X, infos.Y, mess)
 			// case "[LAOI]":
 			// 	W.AOIs.getAOISetupForPlayer(infos.X, infos.Y)
-		case "[PICK]":
+		} else {
+			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
+		}
+	case "[PICK]":
+		var infos USER
+		err := json.Unmarshal(message, &infos)
+		if err == nil {
 			if W.Map.Items[infos.X][infos.Y].ID != 0 {
 				clog.Test("World", "CallToAction", "Player %s pick item %d", infos.ID, W.Map.Items[infos.X][infos.Y].ID)
 				user := W.UserList[infos.ID]
@@ -284,11 +296,27 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 				W.AOIs.addEvent(infos.X, infos.Y, mess)
 				W.Map.Items[infos.X][infos.Y] = ITEM{}
 			}
-		default:
-			clog.Warn("World", "CallToAction", "Bad Action : %s", cmd)
+		} else {
+			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
-	} else {
-		clog.Warn("World", "CallToAction", "%s", err)
+	case "[DROP]":
+		var infos ITEM
+		err := json.Unmarshal(message, &infos)
+		if err == nil {
+			clog.Trace("", "", "%v", infos)
+			W.Map.Items[infos.X][infos.Y] = ITEM{
+				ID: infos.ID,
+				X:  infos.X,
+				Y:  infos.Y,
+			}
+			json, _ := json.Marshal(W.Map.Items[infos.X][infos.Y])
+			mess := []byte(fmt.Sprintf("[SHOW]%s", json))
+			W.AOIs.addEvent(infos.X, infos.Y, mess)
+		} else {
+			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
+		}
+	default:
+		clog.Warn("World", "CallToAction", "Bad Action : %s", cmd)
 	}
 }
 

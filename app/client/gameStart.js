@@ -5,7 +5,7 @@ var Config = require('config');
 var gameBootstrapper = {
     init: function(gameContainerElementId){
 
-        var game = new Phaser.Game(1280, 768, Phaser.CANVAS, gameContainerElementId)
+        var game = new Phaser.Game(1280, 768, Phaser.AUTO, gameContainerElementId)
 
 		game.Properties = {
 			game_elemnt: "gameDiv",

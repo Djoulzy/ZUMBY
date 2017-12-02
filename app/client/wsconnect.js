@@ -44,6 +44,11 @@ var Connection = function (addr, callback) {
 					var obj = JSON.parse(cmd[i].substr(6));
 					connEvt["hide_item"](obj);
 					break;
+				case "[SHOW]":
+					var obj = JSON.parse(cmd[i].substr(6));
+					console.log(obj)
+					connEvt["show_item"](obj);
+					break;
 				case "[WLCM]":
 					// console.log(cmd[i])
 					var obj = JSON.parse(cmd[i].substr(6))
@@ -106,6 +111,10 @@ var Connection = function (addr, callback) {
 
 	this.playerGetItem = function(message) {
 		ws.send("[PICK]" + JSON.stringify(message))
+	}
+
+	this.playerDropItem = function(message) {
+		ws.send("[DROP]" + JSON.stringify(message))
 	}
 }
 

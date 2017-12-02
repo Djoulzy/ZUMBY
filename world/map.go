@@ -143,7 +143,11 @@ func (M *MapData) ExportMapArea(x, y, AOIWidth, AOIHeight int) []byte {
 		for i := startx; i < startx+tmp.Width; i++ {
 			tmp.Layers[0].Data[cpt] = M.Ground[i][j]
 			tmp.Layers[1].Data[cpt] = M.Block[i][j]
-			tmp.Layers[2].Data[cpt] = M.Over[i][j]
+			if M.Items[i][j].ID != 0 {
+				tmp.Layers[2].Data[cpt] = M.Items[i][j].ID
+			} else {
+				tmp.Layers[2].Data[cpt] = M.Over[i][j]
+			}
 			cpt++
 		}
 	}

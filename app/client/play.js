@@ -56,6 +56,7 @@ Play.prototype = {
       	this.game.socket.on("enemy_move", this.onEnemyMove.bind(this));
       	this.game.socket.on("kill_enemy", this.onRemoveEntity.bind(this));
       	this.game.socket.on("hide_item", this.onRemoveItem.bind(this));
+      	this.game.socket.on("show_item", this.onAddItem.bind(this));
     },
 
 	findGetParameter: function(parameterName) {
@@ -92,7 +93,7 @@ Play.prototype = {
 	},
 
 	onAddItem: function(data) {
-
+		this.game.WorldMap.addTileInArea(data.id, data.x, data.y)
 	},
 
 ////////////////////////////////////////////////////

@@ -75,6 +75,12 @@ class Area
 		this.data.removeTile(newX, newY, this.hauteurs)
 	}
 
+	addTileAt(id, x, y) {
+		var newX = x - (this.hauteurs.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
+		var newY = y - (this.hauteurs.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
+		this.data.putTile(id, newX, newY, this.hauteurs)
+	}
+
 	destroy() {
 		if (this.status == 2) {
 			this.terrain.destroy()
@@ -126,8 +132,18 @@ class Map
 		return this.WorldMap.getItemValueAt(x, y)
 	}
 
+	isFreeSpace(x, y) {
+		if (this.WorldMap.getTileValueAt(x, y) + this.WorldMap.getItemValueAt(x, y) == 0)
+			return true
+		else return false
+	}
+
 	removeTileInArea(x, y) {
 		this.WorldMap.removeTileAt(x, y)
+	}
+
+	addTileInArea(id, x, y) {
+		this.WorldMap.addTileAt(id, x, y)
 	}
 }
 

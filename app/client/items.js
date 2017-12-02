@@ -72,7 +72,14 @@ class Bag
 		var fullx = Math.floor((this.game.camera.x + item.x)/32)
 		var fully = Math.floor((this.game.camera.y + item.y)/32)
 		console.log(fullx, fully)
-		if (this.game.WorldMap.getItemInArea(fullx, fully) == 0) {
+		if (this.game.WorldMap.isFreeSpace(fullx, fully)) {
+			this.game.socket.playerDropItem({
+				typ: "P",
+				owner: this.game.player.User_id,
+				id: item.tileID,
+				x: fullx,
+				y: fully
+			})
 			this.sac[item.zone] = 0
 			item.kill()
 			return true
