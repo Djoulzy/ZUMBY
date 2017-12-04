@@ -116,6 +116,10 @@ var Connection = function (addr, callback) {
 	this.playerDropItem = function(message) {
 		ws.send("[DROP]" + JSON.stringify(message))
 	}
+
+	this.playerUpdateInventory = function(message) {
+		ws.send("[UPDI]" + JSON.stringify(message))
+	}
 }
 
 module.exports = Connection;
