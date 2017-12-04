@@ -300,21 +300,26 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
 	case "[DROP]":
-		var infos ITEM
+		var infos struct {
+			owner string
+			id    int
+			x     int
+			y     int
+		}
 		err := json.Unmarshal(message, &infos)
 		if err == nil {
 			clog.Trace("", "", "%v", infos)
-			W.Map.Items[infos.X][infos.Y] = ITEM{
-				ID: infos.ID,
-				X:  infos.X,
-				Y:  infos.Y,
+			W.Map.Items[infos.x][infos.y] = ITEM{
+				ID: infos.id,
 			}
-			json, _ := json.Marshal(W.Map.Items[infos.X][infos.Y])
+			json, _ := json.Marshal(W.Map.Items[infos.x][infos.y])
 			mess := []byte(fmt.Sprintf("[SHOW]%s", json))
-			W.AOIs.addEvent(infos.X, infos.Y, mess)
+			W.AOIs.addEvent(infos.x, infos.y, mess)
 		} else {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
+	case "[UPDI]":
+		clog.Trace("World", "CallToAction", "UPDI: %s", message)
 	default:
 		clog.Warn("World", "CallToAction", "Bad Action : %s", cmd)
 	}

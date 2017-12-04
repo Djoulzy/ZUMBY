@@ -101,8 +101,6 @@ func (M *MapData) loadTiledJSONMap(file string) {
 			if item != 0 {
 				M.Items[col][row] = ITEM{
 					ID: M.FileData.Layers[3].Data[(row*M.Width)+col],
-					X:  col,
-					Y:  row,
 				}
 				M.Over[col][row] = item
 			}

@@ -1,10 +1,5 @@
 'use strict'
 
-class Pocket {
-	constructor(game) {
-	}
-}
-
 class Bag
 {
 	constructor(game, nbPockets) {
@@ -32,9 +27,9 @@ class Bag
 		this.pocketPos[9] = new Phaser.Point(this.cartouche.x + 222, this.cartouche.y + 578)
 
 
-		this.addItem(151)
-		this.addItem(151)
-		this.addItem(151)
+		// this.addItem(151)
+		// this.addItem(151)
+		// this.addItem(151)
 	}
 
 	findEmptyZone() {
@@ -68,6 +63,10 @@ class Bag
 
 	}
 
+	sendUpdate() {
+		this.game.socket.playerUpdateInventory(this.sac)
+	}
+
 	throwItem(item, pointer) {
 		var fullx = Math.floor((this.game.camera.x + item.x)/32)
 		var fully = Math.floor((this.game.camera.y + item.y)/32)
@@ -80,7 +79,7 @@ class Bag
 				x: fullx,
 				y: fully
 			})
-			this.sac[item.zone] = 0
+			this.sac[item.pocket] = 0
 			item.kill()
 			return true
 		}
@@ -108,9 +107,11 @@ class Bag
 				draggedSprite.position.x = this.pocketPos[zone].x
 				draggedSprite.position.y = this.pocketPos[zone].y
 				draggedSprite.originalPosition = draggedSprite.position.clone()
+				console.log("from: "+draggedSprite.pocket+" to: "+zone)
 				this.sac[zone] = draggedSprite.tileID
-				this.sac[draggedSprite.zone] = 0
-				draggedSprite.zone = zone
+				this.sac[draggedSprite.pocket] = 0
+				draggedSprite.pocket = zone
+				this.sendUpdate()
 				return
 			} else {
 				if (this.combineItems(draggedSprite.tileID, this.sac[zone])) return
