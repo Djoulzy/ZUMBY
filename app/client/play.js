@@ -34,6 +34,8 @@ Play.prototype = {
 		this.game.midLayer = this.game.add.group()
 		this.game.frontLayer = this.game.add.group()
 
+		this.night = this.game.add.sprite(960, 768)
+
 		this.initSocket()
 		this.bullets = new Shoot(this.game)
 		this.explode = new Explode(this.game)
@@ -211,11 +213,14 @@ Play.prototype = {
 				this.game.debug.spriteInfo(this.game.player.sprite, 32, 32)
 			}
 		}
-		this.game.debug.cameraInfo(this.game.camera, 32, 500);
+		this.game.debug.cameraInfo(this.game.camera, 400, 32);
 
 		// var zone = this.game.camera.deadzone;
 	    // this.game.context.fillStyle = 'rgba(255,0,0,0.6)';
 	    // this.game.context.fillRect(zone.x, zone.y, zone.width, zone.height);
+
+		this.game.debug.gameInfo(32, 500)
+		this.game.debug.gameTimeInfo(400, 500)
 	}
 }
 

@@ -25,7 +25,7 @@ class User
 	}
 
 	initSprite(face) {
-		this.sprite = this.game.add.sprite(this.X*this.step, this.Y*this.step, this.face);
+		this.sprite = this.game.add.sprite(this.X*this.step, this.Y*this.step, this.face)
 		this.game.midLayer.add(this.sprite)
 		this.game.physics.arcade.enable(this.sprite);
 	    // this.sprite.body.collideWorldBounds = true;

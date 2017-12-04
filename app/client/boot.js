@@ -8,6 +8,7 @@ Boot.prototype = {
     preload: function(){
         // Debbug
         // this.game.plugins.add(Phaser.Plugin.Inspector)
+        this.game.plugins.add(Phaser.Plugin.AdvancedTiming, {mode: 'text'})
 
         this.game.stage.disableVisibilityChange = true;
         this.game.stage.backgroundColor = 0x3b0760;
