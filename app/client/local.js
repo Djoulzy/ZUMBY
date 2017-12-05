@@ -31,6 +31,12 @@ class Local extends User
 	initSprite(face) {
 		super.initSprite(face)
 		this.game.camera.follow(this.sprite)
+
+		var Normal = { font: "12px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" };
+		this.label = this.game.add.text(0, -15, this.User_id, Normal)
+		this.label.setShadow(1, 1, 'rgba(0, 0, 0, 1)', 1);
+		this.sprite.addChild(this.label);
+		
 		console.log("Player in GAME !")
 	}
 

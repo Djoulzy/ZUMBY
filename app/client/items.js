@@ -125,34 +125,3 @@ class Bag
 }
 
 module.exports = Bag
-
--// var sprites = [];
--// var currentSprite;
--// for (var s = 0; s < 10; s++) {  
--// 	// create our sprite using the placeholder 'currentSprite' var so we can do more with it  
--// 	currentSprite = game.add.sprite(game.rnd.integerInRange(0, game.width), game.rnd.integerInRange(0, game.height), 'draggable');  
--// 	// clone the current position of the sprite into a new Phaser.Point so we remember where it started  
--// 	currentSprite.originalPosition = currentSprite.position.clone();  
--// 	// set it to be draggable  
--// 	currentSprite.inputEnabled = true;  
--// 	currentSprite.input.enableDrag();  
--// 	currentSprite.events.onDragStart.add(startDrag, this);  
--// 	currentSprite.events.onDragStop.add(stopDrag, this);  
--// 	// finally add this sprite to the sprites array  
--// 	sprites.push(currentSprite);
--// }
--
--// function startDrag(currentSprite) {  
--// 	// adding a parameter to 'startDrag' and 'stopDrag' allows us to determine which sprite is being dragged  
--// 	currentSprite.body.moves = false;
--// }
--
--// function stopDrag(currentSprite) {  
--// 	currentSprite.body.moves = true;  
--// 	// overlap provides a boolean return value to determine if an overlap has occurred - we'll use this to snap the sprite back in the event it doesn't overlap  
--// 	if (!game.physics.arcade.overlap(currentSprite, sprite2, function() {    
--// 	// ... an overlap occurred, so do something here   
--// 	})) {    
--// 	// ... no overlap occurred so snap the sprite back to the original position by copying the values to the current position    
--// 	currentSprite.position.copyFrom(currentSprite.originalPosition);  
--// }}
