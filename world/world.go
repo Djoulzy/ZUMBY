@@ -283,16 +283,13 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
 	case "[PICK]":
-		var infos USER
+		var infos INVENTORY
 		err := json.Unmarshal(message, &infos)
 		if err == nil {
-			if W.Map.Items[infos.X][infos.Y].ID != 0 {
-				clog.Test("World", "CallToAction", "Player %s pick item %d", infos.ID, W.Map.Items[infos.X][infos.Y].ID)
-				user := W.UserList[infos.ID]
-				W.Map.Items[infos.X][infos.Y].Owner = infos.ID
-				user.Inventory = append(user.Inventory, W.Map.Items[infos.X][infos.Y])
-				json, _ := json.Marshal(W.Map.Items[infos.X][infos.Y])
-				mess := []byte(fmt.Sprintf("[HIDE]%s", json))
+			if (W.Map.Items[infos.X][infos.Y].ID != 0) && (W.Map.Items[infos.X][infos.Y].ID == infos.ID) {
+				clog.Test("World", "CallToAction", "Player %s pick item %d", infos.Owner, infos.ID)
+				W.inventoryAdd(infos)
+				mess := []byte(fmt.Sprintf("[HIDE]%s", message))
 				W.AOIs.addEvent(infos.X, infos.Y, mess)
 				W.Map.Items[infos.X][infos.Y] = ITEM{}
 			}
@@ -300,26 +297,26 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
 	case "[DROP]":
-		var infos struct {
-			owner string
-			id    int
-			x     int
-			y     int
-		}
+		var infos INVENTORY
 		err := json.Unmarshal(message, &infos)
 		if err == nil {
 			clog.Trace("", "", "%v", infos)
-			W.Map.Items[infos.x][infos.y] = ITEM{
-				ID: infos.id,
+			W.Map.Items[infos.X][infos.Y] = ITEM{
+				ID: infos.ID,
 			}
-			json, _ := json.Marshal(W.Map.Items[infos.x][infos.y])
-			mess := []byte(fmt.Sprintf("[SHOW]%s", json))
-			W.AOIs.addEvent(infos.x, infos.y, mess)
+			// json, _ := json.Marshal(W.Map.Items[infos.X][infos.Y])
+			mess := []byte(fmt.Sprintf("[SHOW]%s", message))
+			W.AOIs.addEvent(infos.X, infos.Y, mess)
 		} else {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
 	case "[UPDI]":
-		clog.Trace("World", "CallToAction", "UPDI: %s", message)
+		var infos INVENTORY
+		err := json.Unmarshal(message, &infos)
+		if err != nil {
+			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
+		}
+		clog.Trace("World", "CallToAction", "UPDI: %s", infos)
 	default:
 		clog.Warn("World", "CallToAction", "Bad Action : %s", cmd)
 	}

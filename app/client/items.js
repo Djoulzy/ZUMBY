@@ -39,23 +39,22 @@ class Bag
 		return false
 	}
 
-	addItem(id) {
-		var zone = this.findEmptyZone()
-		if (zone !== false) {
+	addItem(id, pocket) {
+		if (this.sac[pocket] == 0) {
 			var newItem = this.inventory.getFirstExists(false);
 			if (!newItem)
 			{
-				newItem = this.inventory.create(this.pocketPos[zone].x, this.pocketPos[zone].y, 'final', id-1)
+				newItem = this.inventory.create(this.pocketPos[pocket].x, this.pocketPos[pocket].y, 'final', id-1)
 				newItem.inputEnabled = true
 				newItem.input.enableDrag(true)
 				newItem.events.onDragStart.add(this.startDrag, this)
 				newItem.events.onDragStop.add(this.stopDrag, this)
 				newItem.originalPosition = newItem.position.clone()
 				newItem.tileID = id
-				newItem.pocket = zone
+				newItem.pocket = pocket
 			}
-			newItem.reset(this.pocketPos[zone].x, this.pocketPos[zone].y)
-			this.sac[zone] = id
+			newItem.reset(this.pocketPos[pocket].x, this.pocketPos[pocket].y)
+			this.sac[pocket] = id
 		}
 	}
 
@@ -63,19 +62,23 @@ class Bag
 
 	}
 
-	sendUpdate() {
-		this.game.socket.playerUpdateInventory(this.sac)
+	sendUpdate(id, from, to) {
+		this.game.socket.sendJsonMessage(this.game.socket.UPDATEIVENTORY, {
+				owner: this.game.player.User_id,
+				id: id,
+				from: from,
+				to: to
+			})
 	}
 
 	throwItem(item, pointer) {
 		var fullx = Math.floor((this.game.camera.x + item.x)/32)
 		var fully = Math.floor((this.game.camera.y + item.y)/32)
-		console.log(fullx, fully)
 		if (this.game.WorldMap.isFreeSpace(fullx, fully)) {
-			this.game.socket.playerDropItem({
-				typ: "P",
+			this.game.socket.sendJsonMessage(this.game.socket.DROPITEM, {
 				owner: this.game.player.User_id,
 				id: item.tileID,
+				fp: item.pocket,
 				x: fullx,
 				y: fully
 			})
@@ -107,11 +110,10 @@ class Bag
 				draggedSprite.position.x = this.pocketPos[zone].x
 				draggedSprite.position.y = this.pocketPos[zone].y
 				draggedSprite.originalPosition = draggedSprite.position.clone()
-				console.log("from: "+draggedSprite.pocket+" to: "+zone)
+				this.sendUpdate(draggedSprite.tileID, draggedSprite.pocket, zone)
 				this.sac[zone] = draggedSprite.tileID
 				this.sac[draggedSprite.pocket] = 0
 				draggedSprite.pocket = zone
-				this.sendUpdate()
 				return
 			} else {
 				if (this.combineItems(draggedSprite.tileID, this.sac[zone])) return

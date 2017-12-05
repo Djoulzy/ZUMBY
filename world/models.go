@@ -67,6 +67,15 @@ type WORLD struct {
 	MaxMobNum int
 }
 
+type INVENTORY struct {
+	Owner      string `bson:"owner" json:"owner"`
+	ID         int    `bson:"id" json:"id"`
+	FromPocket int    `bson:"fp" json:"fp"`
+	ToPocket   int    `bson:"tp" json:"tp"`
+	X          int    `bson:"x" json:"x"`
+	Y          int    `bson:"y" json:"y"`
+}
+
 func (E Entity) String() string {
 	return fmt.Sprintf("\nID: %s [%s - %s]\nCoord: %dx%d - %s\nAOI: %s", E.ID, E.Type, E.Face, E.X, E.Y, E.Dir, E.AOI)
 }

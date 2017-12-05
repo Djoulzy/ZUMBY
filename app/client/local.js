@@ -52,7 +52,7 @@ class Local extends User
 	}
 
 	fire(portee) {
-		this.game.socket.playerShoot({
+		this.game.socket.sendJsonMessage(this.game.socket.PLAYERSHOOT, {
 			typ: "P",
 			id: this.User_id,
 			x: this.X,
@@ -70,8 +70,7 @@ class Local extends User
 			// this.graphics.moveTo(this.sprite.body.x + 16, this.sprite.body.y + 16);//moving position of graphic if you draw mulitple lines
 		    // this.graphics.lineTo(this.sprite.dest_x + 16, this.sprite.dest_y + 16);
 		    // this.graphics.endFill();
-			this.game.socket.playerMove({
-				typ: "P",
+			this.game.socket.sendJsonMessage(this.game.socket.PLAYERMOVE, {
 				id: this.User_id,
 				png: this.face,
 				num: this.PlayerOrdersCount,
@@ -144,10 +143,13 @@ class Local extends User
 	}
 
 	getItem(inventory) {
-		if ((this.game.WorldMap.getItemInArea(this.X, this.Y) != 0) && (inventory.findEmptyZone() !== false)) {
-			this.game.socket.playerGetItem({
-				typ: "P",
-				id: this.User_id,
+		var item = this.game.WorldMap.getItemInArea(this.X, this.Y)
+		var pocket = inventory.findEmptyZone()
+		if ((item != 0) && (pocket !== false)) {
+			this.game.socket.sendJsonMessage(this.game.socket.PICKITEM, {
+				owner: this.User_id,
+				id: item,
+				tp: pocket,
 				x: this.X,
 				y: this.Y
 			})

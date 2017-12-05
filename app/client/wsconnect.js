@@ -1,6 +1,16 @@
 'use strict'
 
 var Connection = function (addr, callback) {
+
+	this.HELLO = "[HELO]"
+	this.BROADCAST = "[BCST]"
+	this.PLAYERMOVE = "[PMOV]"
+	this.PLAYERSHOOT = "[FIRE]"
+	this.NEWUSER = "[NUSR]"
+	this.PICKITEM = "[PICK]"
+	this.DROPITEM = "[DROP]"
+	this.UPDATEIVENTORY = "[UPDI]"
+
     var ws = new WebSocket ('ws://'+addr+'/ws');
     var brothers = new Set();
     var connEvt = new Set();
@@ -22,30 +32,31 @@ var Connection = function (addr, callback) {
 	    			reconnect(cmd[i].substr(6))
 	    			break;
 	    		case "[FLBK]":
-	    			var obj = JSON.parse(cmd[i].substr(6));
+	    			var obj = JSON.parse(cmd[i].substr(6))
 	    			for (var k in obj.BRTHLST){
 	    			    if (obj.BRTHLST.hasOwnProperty(k))
 	    					 brothers.add(obj.BRTHLST[k].Httpaddr)
 	    			}
 	    			break;
 	            case "[BCST]":
-	                var obj = JSON.parse(cmd[i].substr(6));
-                    if (connEvt["enemy_move"]) connEvt["enemy_move"](obj);
+	                var obj = JSON.parse(cmd[i].substr(6))
+                    if (connEvt["enemy_move"]) connEvt["enemy_move"](obj)
 	                break;
 				case "[KILL]":
 	                // console.log(cmd[i].substr(6));
-					connEvt["kill_enemy"](cmd[i].substr(6));
+					connEvt["kill_enemy"](cmd[i].substr(6))
 	                break;
 				case "[NENT]":
-					var obj = JSON.parse(cmd[i].substr(6));
+					var obj = JSON.parse(cmd[i].substr(6))
 					connEvt["new_entity"](obj);
 					break;
 				case "[HIDE]":
-					var obj = JSON.parse(cmd[i].substr(6));
+					var obj = JSON.parse(cmd[i].substr(6))
+					console.log(obj)
 					connEvt["hide_item"](obj);
 					break;
 				case "[SHOW]":
-					var obj = JSON.parse(cmd[i].substr(6));
+					var obj = JSON.parse(cmd[i].substr(6))
 					console.log(obj)
 					connEvt["show_item"](obj);
 					break;
@@ -84,41 +95,12 @@ var Connection = function (addr, callback) {
 		}
 	}
 
-	this.logon = function(pass) {
-        ws.send("[HELO]" + pass);
-		// connEvt["userlogged"].call(this);
+	this.sendTextMessage = function(action, message) {
+		ws.send(action + message);
 	}
 
-    // this.bcast = function(message) {
-	// 	// console.log(message);
-    //     ws.send("[BCST]" + JSON.stringify(message))
-    // }
-
-    this.playerMove = function(message) {
-		// console.log(message);
-        ws.send("[PMOV]" + JSON.stringify(message))
-    }
-
-	this.playerShoot = function(message) {
-		// console.log(message);
-        ws.send("[FIRE]" + JSON.stringify(message))
-    }
-
-	this.newPlayer = function(message) {
-		// console.log(message);
-        ws.send("[NUSR]" + JSON.stringify(message))
-    }
-
-	this.playerGetItem = function(message) {
-		ws.send("[PICK]" + JSON.stringify(message))
-	}
-
-	this.playerDropItem = function(message) {
-		ws.send("[DROP]" + JSON.stringify(message))
-	}
-
-	this.playerUpdateInventory = function(message) {
-		ws.send("[UPDI]" + JSON.stringify(message))
+	this.sendJsonMessage = function(action, message) {
+		ws.send(action + JSON.stringify(message));
 	}
 }
 
