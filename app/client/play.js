@@ -34,8 +34,6 @@ Play.prototype = {
 		this.game.midLayer = this.game.add.group()
 		this.game.frontLayer = this.game.add.group()
 
-		this.night = this.game.add.sprite(960, 768)
-
 		this.initSocket()
 		this.bullets = new Shoot(this.game)
 		this.explode = new Explode(this.game)
@@ -73,24 +71,21 @@ Play.prototype = {
 
     onSocketConnected: function() {
 		var passphrase = this.findGetParameter("key")
-		this.game.socket.logon(passphrase);
+		this.game.socket.sendTextMessage(this.game.socket.HELLO, passphrase)
 	},
 
     onUserLogged: function(data) {
 		this.game.Properties.pseudo = data.id
 		this.game.player = new Local(this.game, data.id, data.png, data.x, data.y)
 		this.game.player.setAttr(data)
+		this.inventory.loadInventory(data.i)
 		this.running = true
-
-		// this.game.socket.on("new_entity", this.newEntitie.bind(this))
-      	// this.game.socket.on("enemy_move", this.onEnemyMove.bind(this));
-      	// this.game.socket.on("kill_enemy", this.onRemoveEntity.bind(this));
     },
 
 	onRemoveItem: function(data) {
 		this.game.WorldMap.removeTileInArea(data.x, data.y)
 		if (data.owner == this.game.Properties.pseudo) {
-			this.inventory.addItem(data.id)
+			this.inventory.addItem(data.id, data.tp)
 		}
 	},
 
@@ -109,10 +104,6 @@ Play.prototype = {
 		}
 		return false
 	},
-
-	// convertPixelsToTiled: function(x, y) {
-	// 	this.game.player.X
-	// },
 
 	newEntitie: function(data) {
 		if (data.id == this.game.Properties.pseudo) return
@@ -172,7 +163,7 @@ Play.prototype = {
     				this.bullets.fire(this.game.player, portee, this.game.Properties.speed);
     				// this.loadNewMap()
     			}
-    		}
+			}
         }
 	},
 
@@ -207,13 +198,21 @@ Play.prototype = {
     },
 
 	render: function() {
+		// Night
+	    // this.game.context.fillStyle = 'rgba(0,0,0,0.8)';	    
+	    // this.game.context.fillRect(0, 0, 960, 768);
+
 		this.game.DynLoad.start()
 		// if (this.running) {
 		// 	if (this.game.player.inGame) {
 		// 		this.game.debug.spriteInfo(this.game.player.sprite, 32, 32)
 		// 	}
 		// }
-		// this.game.debug.cameraInfo(this.game.camera, 400, 32);
+
+		// Camera
+	    this.game.context.fillStyle = 'rgba(30,0,50,0.8)';
+	    this.game.context.fillRect(5, 620, 300, 140);
+		this.game.debug.cameraInfo(this.game.camera, 10, 640);
 
 		// var zone = this.game.camera.deadzone;
 	    // this.game.context.fillStyle = 'rgba(255,0,0,0.6)';
@@ -221,7 +220,8 @@ Play.prototype = {
 
 		// this.game.debug.gameInfo(32, 500)
 
-	    this.game.context.fillStyle = 'rgba(0,0,0,0.8)';
+		// FPS
+	    this.game.context.fillStyle = 'rgba(30,0,50,0.8)';
 	    this.game.context.fillRect(970, 630, 300, 130);
 		this.game.debug.gameTimeInfo(980, 650)
 	}

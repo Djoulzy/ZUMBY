@@ -8,6 +8,7 @@ class Local extends User
 		super(game, id, face, startx, starty)
 
 		this.isPlayer = true
+		this.inDoor = false
 		this.PlayerOrdersCount = 0
 		// this.sprite.body.onMoveComplete.add(this.moveLocalOver, this);
 		// this.graphics.lineStyle(2, 0xffd900, 1);
@@ -55,7 +56,7 @@ class Local extends User
 	}
 
 	fire(portee) {
-		this.game.socket.playerShoot({
+		this.game.socket.sendJsonMessage(this.game.socket.PLAYERSHOOT, {
 			typ: "P",
 			id: this.User_id,
 			x: this.X,
@@ -73,8 +74,7 @@ class Local extends User
 			// this.graphics.moveTo(this.sprite.body.x + 16, this.sprite.body.y + 16);//moving position of graphic if you draw mulitple lines
 		    // this.graphics.lineTo(this.sprite.dest_x + 16, this.sprite.dest_y + 16);
 		    // this.graphics.endFill();
-			this.game.socket.playerMove({
-				typ: "P",
+			this.game.socket.sendJsonMessage(this.game.socket.PLAYERMOVE, {
 				id: this.User_id,
 				png: this.face,
 				num: this.PlayerOrdersCount,
@@ -92,6 +92,17 @@ class Local extends User
 		this.adjustSpritePosition()
 		this.PlayerIsMoving = false
 		this.sprite.animations.stop();
+		var tile = this.game.WorldMap.getTileInArea(this.X, this.Y)
+		console.log(tile)
+		if (tile == 187) {
+			if (!this.inDoor) {
+				this.game.WorldMap.enterBuilding(this.X, this.Y, 14)
+				this.inDoor = true
+			} else {
+				this.game.WorldMap.exitBuilding(this.X, this.Y)
+				this.inDoor = false
+			}
+		}
 	}
 
 	moveLeft(step, speed) {
@@ -147,10 +158,13 @@ class Local extends User
 	}
 
 	getItem(inventory) {
-		if ((this.game.WorldMap.getItemInArea(this.X, this.Y) != 0) && (inventory.findEmptyZone() !== false)) {
-			this.game.socket.playerGetItem({
-				typ: "P",
-				id: this.User_id,
+		var item = this.game.WorldMap.getItemInArea(this.X, this.Y)
+		var pocket = inventory.findEmptyZone()
+		if ((item != 0) && (pocket !== false)) {
+			this.game.socket.sendJsonMessage(this.game.socket.PICKITEM, {
+				owner: this.User_id,
+				id: item,
+				tp: pocket,
 				x: this.X,
 				y: this.Y
 			})

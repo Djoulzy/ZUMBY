@@ -34,7 +34,7 @@ type Attributes struct {
 
 type ITEM struct {
 	ID    int    `bson:"id" json:"id"`
-	Owner string `bson:"owner" json:"owner"`
+	Owner string `bson:"-" json:"-"`
 }
 
 type USER struct {
@@ -65,6 +65,15 @@ type WORLD struct {
 	AOIHeight int
 	MobSpeed  int
 	MaxMobNum int
+}
+
+type INVENTORY struct {
+	Owner      string `bson:"owner" json:"owner"`
+	ID         int    `bson:"id" json:"id"`
+	FromPocket int    `bson:"fp" json:"fp"`
+	ToPocket   int    `bson:"tp" json:"tp"`
+	X          int    `bson:"x" json:"x"`
+	Y          int    `bson:"y" json:"y"`
 }
 
 func (E Entity) String() string {

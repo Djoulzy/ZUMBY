@@ -49,21 +49,11 @@ class Area
 		}
 	}
 
-	getTileValueAt(x, y) {
+	getTileValueAt(x, y, layerType) {
 		var result = 0
-		var newX = x - (this.obstacles.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
-		var newY = y - (this.obstacles.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
-		var tmp = this.data.getTile(newX, newY, this.obstacles)
-		if (tmp != null) result = tmp.index
-		// console.log("Tile for : "+x+"x"+y+" converted to: "+newX+"x"+newY+" = "+result)
-		return result
-	}
-
-	getItemValueAt(x, y) {
-		var result = 0
-		var newX = x - (this.hauteurs.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
-		var newY = y - (this.hauteurs.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
-		var tmp = this.data.getTile(newX, newY, this.hauteurs)
+		var newX = x - (layerType.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
+		var newY = y - (layerType.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
+		var tmp = this.data.getTile(newX, newY, layerType)
 		if (tmp != null) result = tmp.index
 		// console.log("Tile for : "+x+"x"+y+" converted to: "+newX+"x"+newY+" = "+result)
 		return result
@@ -72,13 +62,27 @@ class Area
 	removeTileAt(x, y) {
 		var newX = x - (this.hauteurs.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
 		var newY = y - (this.hauteurs.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
-		this.data.removeTile(newX, newY, this.hauteurs)
+		this.data.removeTile(newX, newY, this.hauteurs).destroy()
 	}
 
 	addTileAt(id, x, y) {
 		var newX = x - (this.hauteurs.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
 		var newY = y - (this.hauteurs.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
 		this.data.putTile(id, newX, newY, this.hauteurs)
+	}
+
+	findSameTileZone(x, y, tileID, tileList) {
+		console.log("Adding "+x+"x"+y)
+		tileList.add(this.data.getTile(x, y, this.hauteurs))
+
+		if ((this.data.getTile(x + 1, y, this.terrain).index == tileID) && (!tileList.has(this.data.getTile(x + 1, y, this.hauteurs))))
+			this.findSameTileZone(x + 1, y, tileID, tileList)
+		if ((this.data.getTile(x - 1, y, this.terrain).index == tileID) && (!tileList.has(this.data.getTile(x - 1, y, this.hauteurs))))
+			this.findSameTileZone(x - 1, y, tileID, tileList)
+		if ((this.data.getTile(x, y + 1, this.terrain).index == tileID) && (!tileList.has(this.data.getTile(x, y + 1, this.hauteurs))))
+			this.findSameTileZone(x, y + 1, tileID, tileList)
+		if ((this.data.getTile(x, y - 1, this.terrain).index == tileID) && (!tileList.has(this.data.getTile(x, y - 1, this.hauteurs))))
+			this.findSameTileZone(x, y - 1, tileID, tileList)
 	}
 
 	destroy() {
@@ -91,12 +95,13 @@ class Area
 	}
 }
 
-class Map
+class World
 {
     constructor(game) {
 		this.playerArea = new Phaser.Point(-1, -1)
         this.WorldMap = new Area(game)
-        this.game = game
+		this.game = game
+		this.buildings = new Map()
     }
 
     updateArea(x, y) {
@@ -124,16 +129,16 @@ class Map
 	}
 
     getTileInArea(x, y) {
-		return this.WorldMap.getTileValueAt(x, y)
+		return this.WorldMap.getTileValueAt(x, y, this.WorldMap.obstacles)
 	}
 
 	getItemInArea(x, y) {
 		// console.log(x, y, this.WorldMap.getItemValueAt(x, y))
-		return this.WorldMap.getItemValueAt(x, y)
+		return this.WorldMap.getTileValueAt(x, y, this.WorldMap.hauteurs)
 	}
 
 	isFreeSpace(x, y) {
-		if (this.WorldMap.getTileValueAt(x, y) + this.WorldMap.getItemValueAt(x, y) == 0)
+		if (this.WorldMap.getTileValueAt(x, y, this.WorldMap.obstacles) + this.WorldMap.getTileValueAt(x, y, this.WorldMap.hauteurs) == 0)
 			return true
 		else return false
 	}
@@ -145,6 +150,34 @@ class Map
 	addTileInArea(id, x, y) {
 		this.WorldMap.addTileAt(id, x, y)
 	}
+
+	enterBuilding(x, y, tileID) {
+		var newX = x - (this.WorldMap.hauteurs.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
+		var newY = y - (this.WorldMap.hauteurs.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
+		var name = newX+"_"+newY
+		if (!this.buildings.has(name)) {
+			var tileList = new Set()
+			this.WorldMap.findSameTileZone(newX, newY, tileID, tileList)
+			this.buildings.set(name, tileList)
+		} else {
+			var tileList = this.buildings.get(name)
+		}
+		tileList.forEach(function(val1, val2, zeSet){
+			val1.alpha = 0
+		}, this)
+		this.WorldMap.hauteurs.dirty = true
+	}
+
+	exitBuilding(x, y) {
+		var newX = x - (this.WorldMap.hauteurs.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
+		var newY = y - (this.WorldMap.hauteurs.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
+		var name = newX+"_"+newY
+		var tileList = this.buildings.get(name)
+		tileList.forEach(function(val1, val2, zeSet){
+			val1.alpha = 1
+		}, this)
+		this.WorldMap.hauteurs.dirty = true
+	}
 }
 
-module.exports = Map
+module.exports = World
