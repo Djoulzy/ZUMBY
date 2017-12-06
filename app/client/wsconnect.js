@@ -61,8 +61,8 @@ var Connection = function (addr, callback) {
 					connEvt["show_item"](obj);
 					break;
 				case "[WLCM]":
-					// console.log(cmd[i])
 					var obj = JSON.parse(cmd[i].substr(6))
+					console.log(obj)
 					connEvt["userlogged"](obj)
 					break;
 	    		default:;

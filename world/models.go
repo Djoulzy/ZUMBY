@@ -34,7 +34,7 @@ type Attributes struct {
 
 type ITEM struct {
 	ID    int    `bson:"id" json:"id"`
-	Owner string `bson:"owner" json:"owner"`
+	Owner string `bson:"-" json:"-"`
 }
 
 type USER struct {

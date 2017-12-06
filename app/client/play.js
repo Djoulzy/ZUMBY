@@ -78,13 +78,13 @@ Play.prototype = {
 		this.game.Properties.pseudo = data.id
 		this.game.player = new Local(this.game, data.id, data.png, data.x, data.y)
 		this.game.player.setAttr(data)
+		this.inventory.loadInventory(data.i)
 		this.running = true
     },
 
 	onRemoveItem: function(data) {
 		this.game.WorldMap.removeTileInArea(data.x, data.y)
 		if (data.owner == this.game.Properties.pseudo) {
-			console.log(data)
 			this.inventory.addItem(data.id, data.tp)
 		}
 	},
@@ -163,7 +163,7 @@ Play.prototype = {
     				this.bullets.fire(this.game.player, portee, this.game.Properties.speed);
     				// this.loadNewMap()
     			}
-    		}
+			}
         }
 	},
 
@@ -199,8 +199,8 @@ Play.prototype = {
 
 	render: function() {
 		// Night
-	    this.game.context.fillStyle = 'rgba(0,0,0,0.8)';
-	    this.game.context.fillRect(0, 0, 960, 768);
+	    // this.game.context.fillStyle = 'rgba(0,0,0,0.8)';	    
+	    // this.game.context.fillRect(0, 0, 960, 768);
 
 		this.game.DynLoad.start()
 		// if (this.running) {

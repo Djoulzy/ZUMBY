@@ -187,6 +187,7 @@ func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
 			Attributes: Attributes{
 				PV: 15, Starv: 15, Thirst: 15,
 			},
+			Inventory: make([]ITEM, 10),
 		}
 		dat, err = json.Marshal(infos)
 		if err != nil {
@@ -300,11 +301,8 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 		var infos INVENTORY
 		err := json.Unmarshal(message, &infos)
 		if err == nil {
-			clog.Trace("", "", "%v", infos)
-			W.Map.Items[infos.X][infos.Y] = ITEM{
-				ID: infos.ID,
-			}
-			// json, _ := json.Marshal(W.Map.Items[infos.X][infos.Y])
+			W.inventoryDrop(infos)
+			clog.Warn("World", "CallToAction", "%s:%s:%s", cmd, message, err)
 			mess := []byte(fmt.Sprintf("[SHOW]%s", message))
 			W.AOIs.addEvent(infos.X, infos.Y, mess)
 		} else {
@@ -313,10 +311,11 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 	case "[UPDI]":
 		var infos INVENTORY
 		err := json.Unmarshal(message, &infos)
-		if err != nil {
-			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
+		if err == nil {
+			W.inventoryUpdate(infos)
+		} else {
+			clog.Warn("World", "CallToAction", "%s:%s:%s", cmd, message, err)
 		}
-		clog.Trace("World", "CallToAction", "UPDI: %s", infos)
 	default:
 		clog.Warn("World", "CallToAction", "Bad Action : %s", cmd)
 	}

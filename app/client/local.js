@@ -8,6 +8,7 @@ class Local extends User
 		super(game, id, face, startx, starty)
 
 		this.isPlayer = true
+		this.inDoor = false
 		this.PlayerOrdersCount = 0
 		// this.sprite.body.onMoveComplete.add(this.moveLocalOver, this);
 		// this.graphics.lineStyle(2, 0xffd900, 1);
@@ -88,6 +89,17 @@ class Local extends User
 		this.adjustSpritePosition()
 		this.PlayerIsMoving = false
 		this.sprite.animations.stop();
+		var tile = this.game.WorldMap.getTileInArea(this.X, this.Y)
+		console.log(tile)
+		if (tile == 187) {
+			if (!this.inDoor) {
+				this.game.WorldMap.enterBuilding(this.X, this.Y, 14)
+				this.inDoor = true
+			} else {
+				this.game.WorldMap.exitBuilding(this.X, this.Y)
+				this.inDoor = false
+			}
+		}
 	}
 
 	moveLeft(step, speed) {

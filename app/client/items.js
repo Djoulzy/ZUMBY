@@ -58,6 +58,12 @@ class Bag
 		}
 	}
 
+	loadInventory(itemList) {
+		for (var i=0; i<10; i++) {
+			if (itemList[i].id != 0) this.addItem(itemList[i].id, i)
+		}
+	}
+
 	combineItems(item1, item2) {
 
 	}
@@ -66,8 +72,8 @@ class Bag
 		this.game.socket.sendJsonMessage(this.game.socket.UPDATEIVENTORY, {
 				owner: this.game.player.User_id,
 				id: id,
-				from: from,
-				to: to
+				fp: from,
+				tp: to
 			})
 	}
 
