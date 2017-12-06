@@ -40,6 +40,9 @@ class Local extends User
 		console.log("Player in GAME !")
 	}
 
+
+
+
 	setAttr(data) {
 		this.PV = data.pv
 		this.ST = data.st
