@@ -85,9 +85,8 @@ func (M *MapData) loadTiledJSONMap(file string) {
 	for i := 0; i < M.Width; i++ {
 		M.Entities[i] = make([]interface{}, M.Height)
 		M.Ground[i] = make([]int, M.Height)
-		M.Block[i] = make([]int, M.Height)
-		M.Over[i] = make([]int, M.Height)
 		M.Items[i] = make([]ITEM, M.Height)
+		M.Over[i] = make([]int, M.Height)
 	}
 
 	row := 0
@@ -95,14 +94,9 @@ func (M *MapData) loadTiledJSONMap(file string) {
 		col := 0
 		for col < M.Width {
 			M.Ground[col][row] = M.FileData.Layers[0].Data[(row*M.Width)+col]
-			M.Block[col][row] = M.FileData.Layers[1].Data[(row*M.Width)+col]
 			M.Over[col][row] = M.FileData.Layers[2].Data[(row*M.Width)+col]
-			item := M.FileData.Layers[3].Data[(row*M.Width)+col]
-			if item != 0 {
-				M.Items[col][row] = ITEM{
-					ID: M.FileData.Layers[3].Data[(row*M.Width)+col],
-				}
-				M.Over[col][row] = item
+			M.Items[col][row] = ITEM{
+				ID: M.FileData.Layers[1].Data[(row*M.Width)+col],
 			}
 			M.Entities[col][row] = nil
 			col++
@@ -140,17 +134,13 @@ func (M *MapData) ExportMapArea(x, y, AOIWidth, AOIHeight int) []byte {
 	for j := starty; j < starty+tmp.Height; j++ {
 		for i := startx; i < startx+tmp.Width; i++ {
 			tmp.Layers[0].Data[cpt] = M.Ground[i][j]
-			tmp.Layers[1].Data[cpt] = M.Block[i][j]
-			if M.Items[i][j].ID != 0 {
-				tmp.Layers[2].Data[cpt] = M.Items[i][j].ID
-			} else {
-				tmp.Layers[2].Data[cpt] = M.Over[i][j]
-			}
+			tmp.Layers[1].Data[cpt] = M.Items[i][j].ID
+			tmp.Layers[2].Data[cpt] = M.Over[i][j]
 			cpt++
 		}
 	}
 
-	tmp.Layers[0].Name = "terrain"
+	tmp.Layers[0].Name = "back"
 	tmp.Layers[0].Type = "tilelayer"
 	tmp.Layers[0].Opacity = 1
 	tmp.Layers[0].Visible = true
@@ -165,7 +155,7 @@ func (M *MapData) ExportMapArea(x, y, AOIWidth, AOIHeight int) []byte {
 	tmp.Layers[0].Offsetx = startx * tmp.Tilewidth
 	tmp.Layers[0].Offsety = starty * tmp.Tileheight
 
-	tmp.Layers[1].Name = "obstacles"
+	tmp.Layers[1].Name = "items"
 	tmp.Layers[1].Type = "tilelayer"
 	tmp.Layers[1].Opacity = 1
 	tmp.Layers[1].Visible = true
@@ -180,7 +170,7 @@ func (M *MapData) ExportMapArea(x, y, AOIWidth, AOIHeight int) []byte {
 	tmp.Layers[1].Offsetx = startx * tmp.Tilewidth
 	tmp.Layers[1].Offsety = starty * tmp.Tileheight
 
-	tmp.Layers[2].Name = "hauteurs"
+	tmp.Layers[2].Name = "front"
 	tmp.Layers[2].Type = "tilelayer"
 	tmp.Layers[2].Opacity = 1
 	tmp.Layers[2].Visible = true
