@@ -12,6 +12,19 @@ import (
 	"github.com/Djoulzy/Tools/clog"
 )
 
+//
+// Tiles:
+// 0-256 : Back
+//		0-128 : Terrains traversables (0 - 0x80)
+//		129-256 : Terrains bloquant (0x81 - 0x100)
+// 257-512 : Front
+//		257-384 : (0x101 - 0x180)
+//		385-512 : (0x181 - 0x200)
+// 513-768 : Items
+//		513-640 : Bloquant (0x201 - 0x280)
+//		641-768 : Prennable / non bloquant (0x281 - 0x300)
+//
+
 type FILELAYER struct {
 	Data    []int  `bson:"data" json:"data"`
 	Name    string `bson:"name" json:"name"`
@@ -60,7 +73,6 @@ type MapData struct {
 	Height   int
 	Entities [][]interface{}
 	Over     [][]int
-	Block    [][]int
 	Ground   [][]int
 	Items    [][]ITEM
 	FileData FILEMAP
@@ -79,7 +91,6 @@ func (M *MapData) loadTiledJSONMap(file string) {
 
 	M.Ground = make([][]int, M.Width)
 	M.Over = make([][]int, M.Width)
-	M.Block = make([][]int, M.Width)
 	M.Items = make([][]ITEM, M.Width)
 	M.Entities = make([][]interface{}, M.Width)
 	for i := 0; i < M.Width; i++ {
@@ -195,7 +206,7 @@ func (M *MapData) Draw() {
 	display := "*"
 	for y := 0; y < M.Height; y++ {
 		for x := 0; x < M.Width; x++ {
-			val := M.Block[x][y]
+			val := M.Ground[x][y]
 			if val == 0 {
 				visuel = "   "
 			} else if val == -1 {
@@ -252,7 +263,7 @@ func (M *MapData) genAOI(x, y, AOIWidth, AOIHeight int) {
 
 	for aoiy := 0; aoiy < AOIHeight; aoiy++ {
 		for aoix := 0; aoix < AOIWidth; aoix++ {
-			val := M.Block[startx+aoix][starty+aoiy]
+			val := M.Ground[startx+aoix][starty+aoiy]
 			if val == 0 {
 				drawRect(img, aoix*pixel, aoiy*pixel, pixel, pixel, color.RGBA{0, 0, 0, 255})
 			} else {
@@ -280,7 +291,7 @@ func (M *MapData) genImage() {
 
 	for y := 0; y < M.Height; y++ {
 		for x := 0; x < M.Width; x++ {
-			val := M.Block[x][y]
+			val := M.Ground[x][y]
 			if val == 0 {
 				img.Set(x, y, color.RGBA{0, 0, 0, 255})
 			} else {

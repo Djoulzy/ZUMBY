@@ -35,9 +35,9 @@ class Area
 			this.setWorldBound()
 			this.data = this.game.add.tilemap(this.name);
 			this.data.addTilesetImage('final');
-			this.terrain = this.data.createLayer('terrain')
-			this.obstacles = this.data.createLayer('obstacles')
-			this.hauteurs = this.data.createLayer('hauteurs')
+			this.terrain = this.data.createLayer('back')
+			this.obstacles = this.data.createLayer('items')
+			this.hauteurs = this.data.createLayer('front')
 
 			this.game.backLayer.add(this.terrain)
 			this.game.backLayer.add(this.obstacles)

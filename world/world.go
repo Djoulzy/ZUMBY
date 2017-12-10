@@ -85,7 +85,7 @@ func (W *WORLD) findCloserUser(mob *MOB) (*USER, error) {
 // }
 
 func (W *WORLD) tileIsFree(x, y int) bool {
-	if W.Map.Block[x][y] == 0 && W.Map.Entities[x][y] == nil {
+	if W.Map.Ground[x][y] <= 128 && W.Map.Entities[x][y] == nil {
 		return true
 	}
 	return false
