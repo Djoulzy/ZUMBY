@@ -16,9 +16,9 @@ class Area
         this.coord = new Phaser.Point(0, 0)
         this.status = 0
 		this.name = '0_0'
-		this.tarrain = null
-		this.obstacles = null
-		this.hauteurs = null
+		this.back = null
+		this.items = null
+		this.front = null
     }
 
 	setWorldBound() {
@@ -35,14 +35,14 @@ class Area
 			this.setWorldBound()
 			this.data = this.game.add.tilemap(this.name);
 			this.data.addTilesetImage('final');
-			this.terrain = this.data.createLayer('back')
-			this.obstacles = this.data.createLayer('items')
-			this.hauteurs = this.data.createLayer('front')
+			this.back = this.data.createLayer('back')
+			this.items = this.data.createLayer('items')
+			this.front = this.data.createLayer('front')
 
-			this.game.backLayer.add(this.terrain)
-			this.game.backLayer.add(this.obstacles)
-			this.game.frontLayer.add(this.hauteurs)
-			this.game.frontLayer.sendToBack(this.hauteurs)
+			this.game.backLayer.add(this.back)
+			this.game.backLayer.add(this.items)
+			this.game.frontLayer.add(this.front)
+			this.game.frontLayer.sendToBack(this.front)
 
 			// this.game.frontLayer.sort();
 			this.status = 2
@@ -73,23 +73,23 @@ class Area
 
 	findSameTileZone(x, y, tileID, tileList) {
 		console.log("Adding "+x+"x"+y)
-		tileList.add(this.data.getTile(x, y, this.hauteurs))
+		tileList.add(this.data.getTile(x, y, this.front))
 
-		if ((this.data.getTile(x + 1, y, this.terrain).index == tileID) && (!tileList.has(this.data.getTile(x + 1, y, this.hauteurs))))
+		if ((this.data.getTile(x + 1, y, this.back).index == tileID) && (!tileList.has(this.data.getTile(x + 1, y, this.front))))
 			this.findSameTileZone(x + 1, y, tileID, tileList)
-		if ((this.data.getTile(x - 1, y, this.terrain).index == tileID) && (!tileList.has(this.data.getTile(x - 1, y, this.hauteurs))))
+		if ((this.data.getTile(x - 1, y, this.back).index == tileID) && (!tileList.has(this.data.getTile(x - 1, y, this.front))))
 			this.findSameTileZone(x - 1, y, tileID, tileList)
-		if ((this.data.getTile(x, y + 1, this.terrain).index == tileID) && (!tileList.has(this.data.getTile(x, y + 1, this.hauteurs))))
+		if ((this.data.getTile(x, y + 1, this.back).index == tileID) && (!tileList.has(this.data.getTile(x, y + 1, this.front))))
 			this.findSameTileZone(x, y + 1, tileID, tileList)
-		if ((this.data.getTile(x, y - 1, this.terrain).index == tileID) && (!tileList.has(this.data.getTile(x, y - 1, this.hauteurs))))
+		if ((this.data.getTile(x, y - 1, this.back).index == tileID) && (!tileList.has(this.data.getTile(x, y - 1, this.front))))
 			this.findSameTileZone(x, y - 1, tileID, tileList)
 	}
 
 	destroy() {
 		if (this.status == 2) {
-			this.terrain.destroy()
-			this.obstacles.destroy()
-			this.hauteurs.destroy()
+			this.back.destroy()
+			this.items.destroy()
+			this.front.destroy()
 			this.data.destroy()
 		}
 	}
@@ -129,16 +129,21 @@ class World
 	}
 
     getTileInArea(x, y) {
-		return this.WorldMap.getTileValueAt(x, y, this.WorldMap.obstacles)
+		return this.WorldMap.getTileValueAt(x, y, this.WorldMap.front)
 	}
 
 	getItemInArea(x, y) {
 		// console.log(x, y, this.WorldMap.getItemValueAt(x, y))
-		return this.WorldMap.getTileValueAt(x, y, this.WorldMap.hauteurs)
+		return this.WorldMap.getTileValueAt(x, y, this.WorldMap.items)
 	}
 
 	isFreeSpace(x, y) {
-		if (this.WorldMap.getTileValueAt(x, y, this.WorldMap.obstacles) + this.WorldMap.getTileValueAt(x, y, this.WorldMap.hauteurs) == 0)
+		var b = this.game.TilesList[this.WorldMap.getTileValueAt(x, y, this.WorldMap.back)].block
+		var i = this.game.TilesList[this.WorldMap.getTileValueAt(x, y, this.WorldMap.items)].block
+		var f = this.game.TilesList[this.WorldMap.getTileValueAt(x, y, this.WorldMap.front)].block
+
+		console.log(b, i, f)
+		if (!b & !i & !f)
 			return true
 		else return false
 	}
@@ -152,8 +157,8 @@ class World
 	}
 
 	enterBuilding(x, y, tileID) {
-		var newX = x - (this.WorldMap.hauteurs.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
-		var newY = y - (this.WorldMap.hauteurs.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
+		var newX = x - (this.WorldMap.front.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
+		var newY = y - (this.WorldMap.front.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
 		var name = newX+"_"+newY
 		if (!this.buildings.has(name)) {
 			var tileList = new Set()
@@ -165,18 +170,18 @@ class World
 		tileList.forEach(function(val1, val2, zeSet){
 			val1.alpha = 0
 		}, this)
-		this.WorldMap.hauteurs.dirty = true
+		this.WorldMap.front.dirty = true
 	}
 
 	exitBuilding(x, y) {
-		var newX = x - (this.WorldMap.hauteurs.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
-		var newY = y - (this.WorldMap.hauteurs.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
+		var newX = x - (this.WorldMap.front.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
+		var newY = y - (this.WorldMap.front.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
 		var name = newX+"_"+newY
 		var tileList = this.buildings.get(name)
 		tileList.forEach(function(val1, val2, zeSet){
 			val1.alpha = 1
 		}, this)
-		this.WorldMap.hauteurs.dirty = true
+		this.WorldMap.front.dirty = true
 	}
 }
 

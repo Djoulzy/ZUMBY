@@ -49,14 +49,18 @@ type MOB struct {
 }
 
 type TILE struct {
-	Type int
-	ID   string
+	ID    int    `bson:"id" json:"id"`
+	Type  string `bson:"type" json:"type"`
+	Item  bool   `bson:"item" json:"item"`
+	Block bool   `bson:"block" json:"block"`
+	Name  string `bson:"name" json:"name"`
 }
 
 type WORLD struct {
 	hub       *hub.Hub
 	MobList   map[string]*MOB
 	UserList  map[string]*USER
+	TilesList []TILE
 	Map       *MapData
 	AOIs      *AOIList
 	TimeStep  time.Duration

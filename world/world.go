@@ -1,12 +1,17 @@
 package world
 
 import (
+	"bufio"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"math/rand"
+	"os"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/Djoulzy/Tools/clog"
@@ -367,26 +372,49 @@ func (W *WORLD) GetMapArea(x, y int) []byte {
 	return W.Map.ExportMapArea(x, y, W.AOIWidth, W.AOIHeight)
 }
 
-// func (W *WORLD) getShortPath(mob *MOB, user *USER) *pathfinder.Node {
-// 	W.Graph = pathfinder.NewGraph(&W.Map, mob.X, mob.Y, user.X, user.Y)
-// 	shortest_path := pathfinder.Astar(W.Graph)
-// 	if len(shortest_path) > 0 {
-// 		return shortest_path[1]
-// 	} else {
-// 		return nil
-// 	}
-// }
-//
-// func (W *WORLD) testPathFinder() {
-// 	x := 50
-// 	y := 11
-// 	graph := pathfinder.NewGraph(&W.Map, 1, 1, x, y)
-// 	shortest_path := pathfinder.Astar(graph)
-// 	for _, path := range shortest_path {
-// 		W.Map[path.X][path.Y] = -1
-// 	}
-// 	W.DrawMap()
-// }
+func getTileList() []TILE {
+	var TilesList []TILE
+
+	TilesList = make([]TILE, 769)
+	f, err := os.Open("../data/TilesList.csv")
+	if err != nil {
+		clog.Error("", "", "%s", err)
+	}
+	r := csv.NewReader(bufio.NewReader(f))
+	r.Comma = ';'
+	r.Comment = '#'
+	for {
+		record, err := r.Read()
+		clog.Trace("", "", "%s", record)
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			clog.Error("", "", "%s - %s", record, err)
+		}
+
+		ID, _ := strconv.Atoi(record[0])
+		item, _ := strconv.ParseBool(record[2])
+		block, _ := strconv.ParseBool(record[3])
+
+		TilesList[ID] = TILE{
+			ID:    ID,
+			Type:  record[1],
+			Item:  item,
+			Block: block,
+			Name:  record[4],
+		}
+	}
+
+	return TilesList
+}
+
+func (W *WORLD) GetTilesList() []byte {
+	dat, _ := json.Marshal(W.TilesList)
+	return dat
+}
+
 func getConfValue(iface interface{}, name string) interface{} {
 	values := reflect.ValueOf(iface).Elem()
 	value := values.FieldByName(name)
@@ -414,6 +442,8 @@ func Init(zeHub *hub.Hub, conf []byte) *WORLD {
 	zeWorld.Map.buildMonPage(zeWorld.AOIWidth, zeWorld.AOIHeight)
 	// zeWorld.AOIs.addItemsToAOI(zeWorld.Map.Items)
 
+	zeWorld.TilesList = getTileList()
+	// clog.Trace("", "", "%s", zeWorld.TilesList)
 	// clog.Trace("", "", "%s", zeWorld.AOIs)
 
 	// m := mapper.NewMap()

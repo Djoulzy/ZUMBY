@@ -94,7 +94,7 @@ class Local extends User
 		this.sprite.animations.stop();
 		var tile = this.game.WorldMap.getTileInArea(this.X, this.Y)
 		console.log(tile)
-		if (tile == 187) {
+		if (tile == 129) {
 			if (!this.inDoor) {
 				this.game.WorldMap.enterBuilding(this.X, this.Y, 14)
 				this.inDoor = true
@@ -106,7 +106,7 @@ class Local extends User
 	}
 
 	moveLeft(step, speed) {
-		if (this.game.WorldMap.getTileInArea(this.X - 1, this.Y) == 0) {
+		if (this.game.WorldMap.isFreeSpace(this.X - 1, this.Y)) {
 			this.dest_X = this.X - 1
 			this.dest_Y = this.Y
 			this.sendMoveToServer('left')
@@ -119,7 +119,7 @@ class Local extends User
 	}
 
 	moveRight(step, speed) {
-		if (this.game.WorldMap.getTileInArea(this.X + 1, this.Y) == 0) {
+		if (this.game.WorldMap.isFreeSpace(this.X + 1, this.Y)) {
 			this.dest_X = this.X + 1
 			this.dest_Y = this.Y
 			this.sendMoveToServer('right')
@@ -132,7 +132,7 @@ class Local extends User
 	}
 
 	moveUp(step, speed) {
-		if (this.game.WorldMap.getTileInArea(this.X, this.Y - 1) == 0) {
+		if (this.game.WorldMap.isFreeSpace(this.X, this.Y - 1)) {
 			this.dest_X = this.X
 			this.dest_Y = this.Y - 1
 			this.sendMoveToServer('up')
@@ -145,7 +145,7 @@ class Local extends User
 	}
 
 	moveDown(step, speed) {
-		if (this.game.WorldMap.getTileInArea(this.X, this.Y + 1) == 0) {
+		if (this.game.WorldMap.isFreeSpace(this.X, this.Y + 1)) {
 			this.dest_X = this.X
 			this.dest_Y = this.Y + 1
 			this.sendMoveToServer('down')

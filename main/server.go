@@ -136,6 +136,7 @@ func main() {
 		Cryptor:          Cryptor,
 		MapGenCallback:   zeWorld.GetMapArea,
 		ClientDisconnect: zeWorld.DropUser,
+		GetTilesList:     zeWorld.GetTilesList,
 		WorldWidth:       conf.AOIWidth,
 		WorldHeight:      conf.AOIHeight,
 	}

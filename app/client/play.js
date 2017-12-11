@@ -44,6 +44,9 @@ Play.prototype = {
 
 		this.game.camera.view = new Phaser.Rectangle(0,0,960,768)
 		// this.game.camera.deadzone = new Phaser.Rectangle(100, 100, 600, 400);
+
+		this.game.TilesList = this.game.cache.getJSON('tilesList')
+		console.log(this.game.TilesList)
     },
 
 ////////////////////////////////////////////////////

@@ -44,6 +44,7 @@ type Manager struct {
 	CallToAction     func(*hub.Client, []byte)
 	Cryptor          *urlcrypt.Cypher
 	MapGenCallback   func(x, y int) []byte
+	GetTilesList     func() []byte
 	ClientDisconnect func(string)
 	WorldWidth       int
 	WorldHeight      int
@@ -234,6 +235,22 @@ func (m *Manager) dataServe(w http.ResponseWriter, r *http.Request) {
 	// w.Write(mapJSON)
 }
 
+func (m *Manager) getGameData(w http.ResponseWriter, r *http.Request) {
+	var str []byte
+	query := strings.Split(string(r.URL.Path[1:]), "/")
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	if query[1] == "TilesList.json" {
+		str = m.GetTilesList()
+	} else {
+		str = []byte("")
+	}
+
+	w.Write(str)
+}
+
 func (m *Manager) getMapArea(w http.ResponseWriter, r *http.Request) {
 	query := strings.Split(string(r.URL.Path[1:]), "/")
 	coord := strings.Split(query[1], "_")
@@ -268,6 +285,7 @@ func (m *Manager) Start(conf *Manager) {
 	http.HandleFunc("/test", m.testPage)
 	http.HandleFunc("/status", m.statusPage)
 	http.HandleFunc("/map/", m.getMapArea)
+	http.HandleFunc("/GameData/", m.getGameData)
 
 	handler := http.HandlerFunc(m.wsConnect)
 	http.Handle("/ws", throttleClients(handler, m.NBAcceptBySecond))

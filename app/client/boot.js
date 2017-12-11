@@ -33,11 +33,18 @@ Boot.prototype = {
 	  	this.game.load.atlas('zombies', 'assets/ZombieSheet.png', 'assets/ZombieSheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
 	  	this.game.load.atlas('shoot', 'assets/shoot.png', 'assets/shoot.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
 		this.game.load.spritesheet('final', 'http://'+Config.MMOServer.Host+'/data/final.png', 32, 32);
-		this.game.load.image('cartouche', 'assets/cartouche.png');
-        this.game.load.start();
+        this.game.load.image('cartouche', 'assets/cartouche.png')
+        this.game.load.json('tilesList', 'http://'+Config.MMOServer.Host+'/GameData/TilesList.json')
+        this.game.load.start()
     },
 
-    showLoadingText: function(){
+    // onTilesListLoaded: function(key, data) {
+    //     console.log(data)
+    //     var tmp = JSON.parse(data)
+    //     return tmp
+    // },
+
+    showLoadingText: function() {
         var loadingText = "- Loading -";
         var text = this.game.add.text(this.game.world.centerX, this.game.world.centerY, loadingText);
         //  Centers the text
