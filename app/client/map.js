@@ -138,12 +138,12 @@ class World
 	}
 
 	isFreeSpace(x, y) {
-		var b = this.game.TilesList[this.WorldMap.getTileValueAt(x, y, this.WorldMap.back)].block
-		var i = this.game.TilesList[this.WorldMap.getTileValueAt(x, y, this.WorldMap.items)].block
-		var f = this.game.TilesList[this.WorldMap.getTileValueAt(x, y, this.WorldMap.front)].block
+		var b = this.game.TilesList[this.WorldMap.getTileValueAt(x, y, this.WorldMap.back)]
+		var i = this.game.TilesList[this.WorldMap.getTileValueAt(x, y, this.WorldMap.items)]
+		var f = this.game.TilesList[this.WorldMap.getTileValueAt(x, y, this.WorldMap.front)]
 
 		console.log(b, i, f)
-		if (!b & !i & !f)
+		if (!b.block & !i.block & !f.block)
 			return true
 		else return false
 	}

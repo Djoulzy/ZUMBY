@@ -90,7 +90,11 @@ func (W *WORLD) findCloserUser(mob *MOB) (*USER, error) {
 // }
 
 func (W *WORLD) tileIsFree(x, y int) bool {
-	if W.Map.Ground[x][y] <= 128 && W.Map.Entities[x][y] == nil {
+	b := W.TilesList[W.Map.Ground[x][y]]
+	i := W.TilesList[W.Map.Items[x][y].ID]
+	f := W.TilesList[W.Map.Over[x][y]]
+
+	if !b.Block && !i.Block && !f.Block {
 		return true
 	}
 	return false
@@ -375,23 +379,22 @@ func (W *WORLD) GetMapArea(x, y int) []byte {
 func getTileList() []TILE {
 	var TilesList []TILE
 
+	clog.Info("World", "getTileList", "Loading Tiles data...")
 	TilesList = make([]TILE, 769)
 	f, err := os.Open("../data/TilesList.csv")
 	if err != nil {
-		clog.Error("", "", "%s", err)
+		clog.Fatal("World", "getTileList", err)
 	}
 	r := csv.NewReader(bufio.NewReader(f))
 	r.Comma = ';'
 	r.Comment = '#'
+	cpt := 0
 	for {
 		record, err := r.Read()
-		clog.Trace("", "", "%s", record)
-
 		if err == io.EOF {
 			break
-		}
-		if err != nil {
-			clog.Error("", "", "%s - %s", record, err)
+		} else if err != nil {
+			clog.Fatal("World", "getTileList", err)
 		}
 
 		ID, _ := strconv.Atoi(record[0])
@@ -405,8 +408,10 @@ func getTileList() []TILE {
 			Block: block,
 			Name:  record[4],
 		}
+		cpt++
 	}
 
+	clog.Debug("World", "getTileList", "%d Tiles loaded", cpt)
 	return TilesList
 }
 
