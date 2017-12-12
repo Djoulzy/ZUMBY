@@ -210,7 +210,7 @@ func (h *Hub) flushBroadcastQueue() {
 		BroadcastQueue[i] = nil
 	}
 	BroadcastQueue = BroadcastQueue[:0]
-	clog.Info("Hub", "flushBroadcastQueue", "Queue flushed")
+	// clog.Debug("Hub", "flushBroadcastQueue", "Queue flushed")
 }
 
 func (h *Hub) unicast(message *Message) {

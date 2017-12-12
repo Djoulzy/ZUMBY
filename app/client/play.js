@@ -29,7 +29,7 @@ Play.prototype = {
 			'right': Phaser.Keyboard.RIGHT })
         this.game.DynLoad = new DynLoad(this.game)
 
-		this.game.Chat = new Chat(this.game)
+		this.game.Chat = new Chat(this.game, this.cursors)
 
 		this.entities = [];
         this.game.backLayer = this.game.add.group()
