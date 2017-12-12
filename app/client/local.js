@@ -90,7 +90,7 @@ class Local extends User
 		this.PlayerIsMoving = false
 		this.sprite.animations.stop();
 		var tile = this.game.WorldMap.getTileInArea(this.X, this.Y)
-		console.log(tile)
+		// console.log(tile)
 		if (tile == 129) {
 			if (!this.inDoor) {
 				this.game.WorldMap.enterBuilding(this.X, this.Y, 14)

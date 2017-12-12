@@ -80,6 +80,12 @@ type INVENTORY struct {
 	Y          int    `bson:"y" json:"y"`
 }
 
+type CHATMSG struct {
+	From string `bson:"from" json:"from"`
+	Type int    `bson:"type" json:"type"`
+	Mess string `bson:"mess" json:"mess"`
+}
+
 func (E Entity) String() string {
 	return fmt.Sprintf("\nID: %s [%s - %s]\nCoord: %dx%d - %s\nAOI: %s", E.ID, E.Type, E.Face, E.X, E.Y, E.Dir, E.AOI)
 }

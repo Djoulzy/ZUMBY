@@ -189,7 +189,8 @@ func (h *Hub) Newrole(modif *ConnModifier) {
 func (h *Hub) broadcast(message *Message) {
 	if message.UserType == ClientUser {
 		BroadcastQueue = append(BroadcastQueue, message.Content)
-		clog.Info("Hub", "broadcast", "New message queued: (%d) - %s", len(BroadcastQueue), message.Content)
+		// clog.Info("Hub", "broadcast", "New message queued: (%d) - %s", len(BroadcastQueue), message.Content)
+		h.flushBroadcastQueue()
 	} else {
 		list := h.FullUsersList[message.UserType]
 		for _, client := range list {

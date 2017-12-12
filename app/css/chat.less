@@ -1,7 +1,15 @@
+.wordwrap { 
+    white-space: pre-wrap;      /* CSS3 */   
+    white-space: -moz-pre-wrap; /* Firefox */    
+    white-space: -pre-wrap;     /* Opera <7 */   
+    white-space: -o-pre-wrap;   /* Opera 7 */    
+    word-wrap: break-word;      /* IE */
+ }
+
 .draggable {
     position: fixed;
     width: 640px;
-    height: 256px;
+    height: 300px;
     top: 520px;
     left: 8px;
     background: #000000;
@@ -9,7 +17,7 @@
     font-family: Arial, Helvetica, sans-serif;
     font-size: 65%;
     font-weight: normal;
-  }
+}
 
 .draggable.is-pointer-down {
 }
@@ -21,41 +29,72 @@
     opacity: 0.9;
 }
 
-.ZFlow {
-    position: relative;
-    width: 630px;
-    height: 210px;
-    top: 0;
-    bottom: 0px;
+.handle {
+    background: #30328f;
     padding: 5px 5px 5px 5px;
-    margin-bottom: 10px;
-    overflow-y: scroll;
-    overflow-x: hidden;
+    cursor: move;
+    border-bottom: 1px solid rgb(255, 255, 255);
+    font-size: 120%;
+    font-weight: bold;
     color: #ffffff;
 }
 
-.ZMenu {
-    position: absolute;
+.ZFlow {
+    position: relative;
+    // width: 630px;
+    height: 220px;
+    top: 0;
     bottom: 0px;
     padding: 5px 5px 5px 5px;
-    margin-bottom: 15px;
-    width: 100%;
+    // margin: 0 40px 10px 0;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    color: #ffffff;
+    border-bottom: 1px solid rgb(255, 255, 255);
+}
+
+.ZMenu {
+    position: relative;
+    bottom: 0px;
+    padding: 5px 5px 5px 5px;
+    background: #52536e;
+    border-bottom: 1px solid rgb(255, 255, 255);
+    font-size: 120%;
+    font-weight: bold;
+}
+
+.ZMenu .talk {
+    color: #e7c117;
+}
+
+.ZMenu .shout {
+    color: #219b2b;
+}
+
+.ZMenu .private {
+    color: #ec5656;
+}
+
+.ZMenu .general {
+    color: #b6b3b3;
 }
 
 .ZText {
-    position: absolute;
-    width: 100%;
+    position: relative;
     bottom: 0px;
-    padding: 0 0 0 0;
-    margin: 0 0 0 0;
+    padding: 0 5px 0 5px;
+    color: #ffffff;
 }
 
 .ZText input {
-    width: 100%;
+    position: relative;
     bottom: 0px;
+    width: 98%;
     background: none;
     background-image: none;
 	border: none;
-	border-top: 1px solid rgb(255, 255, 255);
+
+    font-size: 120%;
+    font-weight: bold;
     color: #ffffff;
 }

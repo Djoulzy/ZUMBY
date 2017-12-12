@@ -289,6 +289,7 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 			W.AOIs.addEvent(infos.X, infos.Y, mess)
 			// case "[LAOI]":
 			// 	W.AOIs.getAOISetupForPlayer(infos.X, infos.Y)
+			W.sendServerMassage("Player moves")
 		} else {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
@@ -339,6 +340,18 @@ func (W *WORLD) sendWorldUpdate() {
 			W.hub.Unicast <- mess
 		}
 	}
+}
+
+func (W *WORLD) sendServerMassage(txt string) {
+	data := CHATMSG{
+		From: "Server",
+		Type: 4,
+		Mess: txt,
+	}
+	json, _ := json.Marshal(data)
+	message := []byte(fmt.Sprintf("[CHAT]%s", json))
+	mess := hub.NewMessage(nil, hub.ClientUser, nil, message)
+	W.hub.Broadcast <- mess
 }
 
 func (W *WORLD) Run() {

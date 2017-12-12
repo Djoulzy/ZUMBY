@@ -11,6 +11,7 @@ var Mob = require('client/mob')
 var Shoot = require('client/shoot')
 var Explode = require('client/explode')
 var Bag = require('client/items')
+var Chat = require('client/chat')
 
 function Play(){}
 
@@ -28,8 +29,9 @@ Play.prototype = {
 			'right': Phaser.Keyboard.RIGHT })
         this.game.DynLoad = new DynLoad(this.game)
 
-		this.entities = [];
+		this.game.Chat = new Chat(this.game)
 
+		this.entities = [];
         this.game.backLayer = this.game.add.group()
 		this.game.midLayer = this.game.add.group()
 		this.game.frontLayer = this.game.add.group()
@@ -46,7 +48,6 @@ Play.prototype = {
 		// this.game.camera.deadzone = new Phaser.Rectangle(100, 100, 600, 400);
 
 		this.game.TilesList = this.game.cache.getJSON('tilesList')
-		console.log(this.game.TilesList)
     },
 
 ////////////////////////////////////////////////////
@@ -59,7 +60,8 @@ Play.prototype = {
       	this.game.socket.on("enemy_move", this.onEnemyMove.bind(this));
       	this.game.socket.on("kill_enemy", this.onRemoveEntity.bind(this));
       	this.game.socket.on("hide_item", this.onRemoveItem.bind(this));
-      	this.game.socket.on("show_item", this.onAddItem.bind(this));
+		this.game.socket.on("show_item", this.onAddItem.bind(this));
+      	this.game.socket.on("chat_message", this.game.Chat.addMessage.bind(this.game.Chat));
     },
 
 	findGetParameter: function(parameterName) {

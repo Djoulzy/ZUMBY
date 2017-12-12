@@ -52,18 +52,19 @@ var Connection = function (addr, callback) {
 					break;
 				case "[HIDE]":
 					var obj = JSON.parse(cmd[i].substr(6))
-					console.log(obj)
 					connEvt["hide_item"](obj);
 					break;
 				case "[SHOW]":
 					var obj = JSON.parse(cmd[i].substr(6))
-					console.log(obj)
 					connEvt["show_item"](obj);
 					break;
 				case "[WLCM]":
 					var obj = JSON.parse(cmd[i].substr(6))
-					console.log(obj)
 					connEvt["userlogged"](obj)
+					break;
+				case "[CHAT]":
+					var obj = JSON.parse(cmd[i].substr(6))
+					connEvt["chat_message"](obj)
 					break;
 	    		default:;
 	    	}
