@@ -19,7 +19,10 @@ module.exports = {
 				},
 			},
 			stylesheets: {
-				joinTo: 'styles/app.css'
+				joinTo: {
+				'styles/login.css': 'app/css/login.less',
+				'styles/chat.css': 'app/css/chat.less'
+				}
 			}
 		},
 		npm: {

@@ -213,9 +213,9 @@ Play.prototype = {
 		// }
 
 		// Camera
-	    this.game.context.fillStyle = 'rgba(30,0,50,0.8)';
-	    this.game.context.fillRect(5, 620, 300, 140);
-		this.game.debug.cameraInfo(this.game.camera, 10, 640);
+	    // this.game.context.fillStyle = 'rgba(30,0,50,0.8)';
+	    // this.game.context.fillRect(5, 620, 300, 140);
+		// this.game.debug.cameraInfo(this.game.camera, 10, 640);
 
 		// var zone = this.game.camera.deadzone;
 	    // this.game.context.fillStyle = 'rgba(255,0,0,0.6)';
