@@ -96,6 +96,7 @@ func main() {
 
 	zeHub = hub.NewHub()
 	zeWorld = world.Init(zeHub, conf_json)
+	clog.ServiceCallback = zeWorld.SendServerMassage
 
 	mon_params := &monitoring.Params{
 		ServerID:          conf.Name,

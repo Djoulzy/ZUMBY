@@ -9,11 +9,11 @@
 .draggable {
     position: fixed;
     width: 640px;
-    height: 300px;
+    // height: 300px;
     top: 520px;
     left: 8px;
     background: #000000;
-    opacity: 0.5;
+    // opacity: 0.5;
     font-family: Arial, Helvetica, sans-serif;
     font-size: 65%;
     font-weight: normal;
@@ -25,18 +25,47 @@
 .draggable.is-dragging {
 }
 
-.draggable:hover {
-    opacity: 0.9;
-}
+// .draggable:hover {
+//     opacity: 0.9;
+// }
 
 .handle {
     background: #30328f;
     padding: 5px 5px 5px 5px;
     cursor: move;
     border-bottom: 1px solid rgb(255, 255, 255);
+}
+
+.handle .tabLine {
+    position: relative;
+}
+
+.handle .tabLine .tab {
     font-size: 120%;
-    font-weight: bold;
+    font-weight: normal;
+    padding: 5px 5px 5px 5px;
     color: #ffffff;
+    cursor: pointer;
+}
+
+.handle .toolsLine {
+    position: absolute;
+    color: #ffffff;
+    cursor: pointer;
+    top: 0;
+    right: 0;
+}
+
+.handle .tabLine .selected {
+    font-weight: bold;
+    background: #000000;
+    border-left: 1px solid rgb(255, 255, 255);
+    border-top: 1px solid rgb(255, 255, 255);
+    border-right: 1px solid rgb(255, 255, 255);
+    border-bottom: 1px solid rgb(0, 0, 0);
+}
+
+.container {
 }
 
 .ZFlow {
@@ -53,6 +82,10 @@
     border-bottom: 1px solid rgb(255, 255, 255);
 }
 
+.ZFlow .txtArea {
+    position: absolute;
+}
+
 .ZMenu {
     position: relative;
     bottom: 0px;
@@ -60,23 +93,28 @@
     background: #52536e;
     border-bottom: 1px solid rgb(255, 255, 255);
     font-size: 120%;
-    font-weight: bold;
+    font-weight: normal;
+    cursor: pointer;
 }
 
-.ZMenu .talk {
+.ZMenu #talk {
+    padding: 5px 5px 5px 5px;
     color: #e7c117;
 }
 
-.ZMenu .shout {
-    color: #219b2b;
-}
-
-.ZMenu .private {
+.ZMenu #shout {
+    padding: 5px 5px 5px 5px;
     color: #ec5656;
 }
 
-.ZMenu .general {
-    color: #b6b3b3;
+.ZMenu #global {
+    padding: 5px 5px 5px 5px;
+    color: #ffffff;
+}
+
+.ZMenu .selected {
+    font-weight: bold;
+    background: #30328f;
 }
 
 .ZText {
@@ -94,7 +132,7 @@
     background-image: none;
 	border: none;
 
-    font-size: 120%;
+    font-size: 105%;
     font-weight: bold;
     color: #ffffff;
 }

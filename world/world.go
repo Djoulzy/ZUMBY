@@ -220,6 +220,7 @@ func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
 	mess := hub.NewMessage(nil, hub.ClientUser, c, message)
 	clog.Test("World", "LogUser", "%s", message)
 	W.hub.Unicast <- mess
+	clog.Service("World", "Run", "%s is now connected...", c.Name)
 
 	W.UserList[infos.ID] = infos
 	W.Map.Entities[infos.X][infos.Y] = infos
@@ -289,7 +290,6 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 			W.AOIs.addEvent(infos.X, infos.Y, mess)
 			// case "[LAOI]":
 			// 	W.AOIs.getAOISetupForPlayer(infos.X, infos.Y)
-			W.sendServerMassage("Player moves")
 		} else {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
@@ -342,7 +342,7 @@ func (W *WORLD) sendWorldUpdate() {
 	}
 }
 
-func (W *WORLD) sendServerMassage(txt string) {
+func (W *WORLD) SendServerMassage(txt string) {
 	data := CHATMSG{
 		From: "Server",
 		Type: 4,

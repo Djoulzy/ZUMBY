@@ -5,6 +5,7 @@
 		<title>ZUMBY - Alpha</title>
 
 		<link rel="stylesheet" href="styles/chat.css" type='text/css'>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
 		<script src="js/vendor.js"></script>
         <!-- <script src="phaser-inspector.min.js"></script> -->
@@ -28,15 +29,32 @@
 		<div id="gameDiv"></div>
 
 		<div id="ZChat" class="draggable">
-			<div class="handle">[CHAT]</div>
-				<div id="ZFlow" class="ZFlow"></div>
-				<div id="ZMenu" class="ZMenu">
-					<a class="talk" href="">Talk</a>
-					<a class="shout" href="">Shout</a>
-					<a class="private" href="">Private</a>
-					<a class="general" href="">General</a>
+			<div class="handle">
+				<div class="tabLine">
+					<span id="T_ZZone" class="tab" tab="ZZone"> ZONE </span>
+					<span id="T_ZGlobal" class="tab selected" tab="ZGlobal"> GLOBAL </span>
+					<span id="T_ZServer" class="tab" tab="ZServer"> SERVER </span>
 				</div>
-				<div id="ZText" class="ZText"><form id="ZForm"><b>&gt;</b><input id="ZInput" type="text" /></form></div>
+				<div class="toolsLine">
+					<i id="sticky" class="material-icons">lock_open</i>
+					<i id="resize" class="material-icons">vertical_align_top</i>
+				</div>
+			</div>
+			<div class="container">
+				<div id="ZFlow" class="ZFlow">
+					<div id="ZZone" class="txtArea"></div>
+					<div id="ZGlobal" class="txtArea"></div>
+					<div id="ZServer" class="txtArea"></div>
+				</div>
+				<div id="ZMenu" class="ZMenu">
+					<span id="talk" class="mode">Talk</span>
+					<span id="shout" class="mode">Shout</span>
+					<span id="global" class="mode selected">Global</span>
+				</div>
+				<div id="ZText" class="ZText">
+					<form id="ZForm"><b>&gt;</b><input id="ZInput" type="text" /></form>
+				</div>
+			</div>
 		</div>
 
 	</body>
