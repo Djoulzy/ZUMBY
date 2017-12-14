@@ -60,19 +60,19 @@ class Area
 	}
 
 	removeTileAt(x, y) {
-		var newX = x - (this.hauteurs.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
-		var newY = y - (this.hauteurs.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
-		this.data.removeTile(newX, newY, this.hauteurs).destroy()
+		var newX = x - (this.items.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
+		var newY = y - (this.items.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
+		this.data.removeTile(newX, newY, this.items).destroy()
 	}
 
 	addTileAt(id, x, y) {
-		var newX = x - (this.hauteurs.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
-		var newY = y - (this.hauteurs.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
-		this.data.putTile(id, newX, newY, this.hauteurs)
+		var newX = x - (this.items.layer.offsetX/32) // - this.coord.x*this.game.Properties.areaWidth
+		var newY = y - (this.items.layer.offsetY/32) // - this.coord.y*this.game.Properties.areaHeight
+		this.data.putTile(id, newX, newY, this.items)
 	}
 
 	findSameTileZone(x, y, tileID, tileList) {
-		console.log("Adding "+x+"x"+y)
+		// console.log("Adding "+x+"x"+y)
 		tileList.add(this.data.getTile(x, y, this.front))
 
 		if ((this.data.getTile(x + 1, y, this.back).index == tileID) && (!tileList.has(this.data.getTile(x + 1, y, this.front))))
@@ -142,7 +142,7 @@ class World
 		var i = this.game.TilesList[this.WorldMap.getTileValueAt(x, y, this.WorldMap.items)]
 		var f = this.game.TilesList[this.WorldMap.getTileValueAt(x, y, this.WorldMap.front)]
 
-		console.log(b, i, f)
+		// console.log(b, i, f)
 		if (!b.block & !i.block & !f.block)
 			return true
 		else return false

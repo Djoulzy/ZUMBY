@@ -326,6 +326,18 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 		} else {
 			clog.Warn("World", "CallToAction", "%s:%s:%s", cmd, message, err)
 		}
+	case "[CHAT]":
+		var infos CHATMSG
+		err := json.Unmarshal(message, &infos)
+		if err == nil {
+			user := W.UserList[infos.From]
+
+			content := []byte(fmt.Sprintf("[CHAT]%s", message))
+			mess := hub.NewMessage(nil, hub.ClientUser, user.hubClient, content)
+			W.hub.Broadcast <- mess
+		} else {
+			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
+		}
 	default:
 		clog.Warn("World", "CallToAction", "Bad Action : %s", cmd)
 	}

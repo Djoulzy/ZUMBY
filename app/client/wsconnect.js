@@ -10,6 +10,7 @@ var Connection = function (addr, callback) {
 	this.PICKITEM = "[PICK]"
 	this.DROPITEM = "[DROP]"
 	this.UPDATEIVENTORY = "[UPDI]"
+	this.PLAYERCHAT = "[CHAT]"
 
     var ws = new WebSocket ('ws://'+addr+'/ws');
     var brothers = new Set();

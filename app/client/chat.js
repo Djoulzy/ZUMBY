@@ -69,13 +69,19 @@ class Chat
 
     addMessage(obj) {
         var tab
+        var classeMess = ""
+    
+        if (obj.from == this.game.Properties.pseudo) classeMess = "messMe"
+        else if (obj.from == "Server") classeMess = "messSrv"
+        else classeMess = "messOther"
+    
         switch(obj.type) {
-            case 1:
-            case 2: tab = this.ZoneWindow; break;
+            case 1: classeMess += " talk"; tab = this.ZoneWindow; break;
+            case 2: classeMess += " shout"; tab = this.ZoneWindow; break;
             case 3: tab = this.GlobalWindow; break;
             default: tab = this.ServerWindow; break;
         }
-        tab.innerHTML += "["+obj.from+"] "+obj.mess+"<br/>"
+        tab.innerHTML += "<span>"+obj.from+" &gt; </span><span class='"+classeMess+"'>"+obj.mess+"</span><br/>"
 
         if (tab.getAttribute("id") == this.selectedZone)
             this.txtWindow.scrollTop = this.txtWindow.scrollHeight
@@ -140,12 +146,11 @@ class Chat
 
     onSendMessage() {
         var textMessage = this.escapeHtml(this.txtInput.value)
-        var mess = {
+        this.game.socket.sendJsonMessage(this.game.socket.PLAYERCHAT, {
             from: this.game.Properties.pseudo,
             type: this.mode,
             mess: textMessage
-        }
-        this.addMessage(mess);
+        })
         this.txtInput.value = ''
         return false
     }
