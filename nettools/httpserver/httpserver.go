@@ -3,7 +3,6 @@ package httpserver
 import (
 	"bytes"
 	"html/template"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -266,6 +265,14 @@ func (m *Manager) getMapArea(w http.ResponseWriter, r *http.Request) {
 
 func (m *Manager) Start(conf *Manager) {
 	m = conf
+
+	// myHttp := &http.Server{
+	// 	Addr:           ":8080",
+	// 	ReadTimeout:    10 * time.Second,
+	// 	WriteTimeout:   10 * time.Second,
+	// 	MaxHeaderBytes: 1 << 20,
+	// }
+
 	Upgrader = &websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -290,8 +297,5 @@ func (m *Manager) Start(conf *Manager) {
 	handler := http.HandlerFunc(m.wsConnect)
 	http.Handle("/ws", throttleClients(handler, m.NBAcceptBySecond))
 
-	err := http.ListenAndServe(m.Httpaddr, nil)
-	if err != nil {
-		log.Fatal("HTTPServer: ", err)
-	}
+	clog.Fatal("httpserver", "Start", http.ListenAndServe(m.Httpaddr, nil))
 }

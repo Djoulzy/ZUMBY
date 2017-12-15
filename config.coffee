@@ -15,7 +15,7 @@ module.exports = {
 				'js/app.js': ['app/config.js',
 					/^app\/client/],
 				'js/crypt.js': /^app\/crypt/,
-				'js/vendor.js': /(^node_modules|vendor)\//
+				'js/vendor.js': /^node_modules/
 				},
 			},
 			stylesheets: {
@@ -28,7 +28,7 @@ module.exports = {
 		npm: {
 			static: [
 				'node_modules/crypto-js',
-				'node_modules/phaser-ce/build/phaser.js'
+				'node_modules/phaser-ce/build/phaser.min.js'
 			]
 		},
 		plugins: {
