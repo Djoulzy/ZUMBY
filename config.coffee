@@ -15,7 +15,7 @@ module.exports = {
 				'js/app.js': ['app/config.js',
 					/^app\/client/],
 				'js/crypt.js': /^app\/crypt/,
-				'js/vendor.js': /^node_modules/
+				'js/vendor.js': /(^node_modules|vendor)\//
 				},
 			},
 			stylesheets: {
@@ -28,7 +28,9 @@ module.exports = {
 		npm: {
 			static: [
 				'node_modules/crypto-js',
-				'node_modules/phaser-ce/build/phaser.min.js'
+				'node_modules/phaser-ce/build/phaser.min.js',
+				'node_modules/draggabilly/dist/draggabilly.pkgd.min.js',
+				'node_modules/phaser-plugin-advanced-timing/index.js'
 			]
 		},
 		plugins: {
