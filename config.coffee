@@ -29,8 +29,7 @@ module.exports = {
 			static: [
 				'node_modules/crypto-js',
 				'node_modules/phaser-ce/build/phaser.min.js',
-				'node_modules/draggabilly/dist/draggabilly.pkgd.min.js',
-				'node_modules/phaser-plugin-advanced-timing/index.js'
+				'node_modules/draggabilly/dist/draggabilly.pkgd.min.js'
 			]
 		},
 		plugins: {

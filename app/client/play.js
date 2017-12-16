@@ -226,9 +226,9 @@ Play.prototype = {
 		// this.game.debug.gameInfo(32, 500)
 
 		// FPS
-	    this.game.context.fillStyle = 'rgba(30,0,50,0.8)';
-	    this.game.context.fillRect(970, 630, 300, 130);
-		this.game.debug.gameTimeInfo(980, 650)
+	    // this.game.context.fillStyle = 'rgba(30,0,50,0.8)';
+	    // this.game.context.fillRect(970, 630, 300, 130);
+		// this.game.debug.gameTimeInfo(980, 650)
 	}
 }
 
