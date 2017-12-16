@@ -46,16 +46,8 @@ Boot.prototype = {
 
     showLoadingText: function() {
         var loadingText = "- Loading -";
-        var text = this.game.add.text(this.game.world.centerX, this.game.world.centerY, loadingText);
-        //  Centers the text
-        text.anchor.set(0.5);
-        text.align = 'center';
-
-        //  Our font + size
-        text.font = 'Arial';
-        text.fontWeight = 'bold';
-        text.fontSize = 70;
-        text.fill = '#ffffff';
+        var style = { font: "bold 70px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" }
+        var text = this.game.add.text(this.game.world.centerX, this.game.world.centerY, loadingText, style)
     }
 }
 
