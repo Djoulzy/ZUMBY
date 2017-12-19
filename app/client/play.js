@@ -101,7 +101,7 @@ Play.prototype = {
 ////////////////////////////////////////////////////
 //                      PLAYERS                   //
 ////////////////////////////////////////////////////
-	findplayerbyid: function(id) {
+	findEntitybyID: function(id) {
 		for (var i = 0; i < this.entities.length; i++) {
 			if (this.entities[i].User_id == id) {
 				return this.entities[i];
@@ -110,11 +110,25 @@ Play.prototype = {
 		return false
 	},
 
+	findEntitybyCoord: function(x, y) {
+		for (var i = 0; i < this.entities.length; i++) {
+			if (this.entities[i].isMoving) {
+				if (this.entities[i].dest_X == x && this.entities[i].dest_Y == y) {
+					return this.entities
+				}
+			}
+			else if (this.entities[i].X == x && this.entities[i].Y == y) {
+				return this.entities
+			}
+		}
+		return false
+	},
+
 	newEntitie: function(data) {
 		if (data.id == this.game.Properties.pseudo) return
-		var movePlayer = this.findplayerbyid(data.id);
+		var movePlayer = this.findEntitybyID(data.id);
 		console.log("New Entity: "+data.id)
-		if (this.findplayerbyid(data.id)) return
+		if (this.findEntitybyID(data.id)) return
 		else {
 			if (data.typ == "P") {
                 console.log("New Remote Player")
@@ -134,7 +148,7 @@ Play.prototype = {
 			return
 		}
 
-		var movePlayer = this.findplayerbyid(data.id);
+		var movePlayer = this.findEntitybyID(data.id);
 		if (!movePlayer) {
 			this.newEntitie(data)
 			return
@@ -143,7 +157,7 @@ Play.prototype = {
 	},
 
 	onRemoveEntity: function(id) {
-		var removePlayer = this.findplayerbyid(id);
+		var removePlayer = this.findEntitybyID(id);
 		if (!removePlayer) {
 			console.log('Player not found: ', id)
 			return
@@ -158,10 +172,12 @@ Play.prototype = {
 		// game.physics.arcade.collide(player.sprite, obstacles, playerBlocked);
         if (this.game.player.inGame) {
     		if (!this.game.player.isMoving()) {
-    			if (this.cursors.left.isDown) this.game.player.moveLeft(this.game.Properties.step, this.game.Properties.speed)
-    			else if (this.cursors.right.isDown) this.game.player.moveRight(this.game.Properties.step, this.game.Properties.speed)
-    			else if (this.cursors.up.isDown) this.game.player.moveUp(this.game.Properties.step, this.game.Properties.speed)
-    			else if (this.cursors.down.isDown) this.game.player.moveDown(this.game.Properties.step, this.game.Properties.speed)
+				var x = this.game.player.X
+				var y = this.game.player.Y
+    			if (this.cursors.left.isDown && this.findEntitybyCoord(x-1,y) == false) this.game.player.moveLeft()
+    			else if (this.cursors.right.isDown && this.findEntitybyCoord(x+1,y) == false) this.game.player.moveRight()
+    			else if (this.cursors.up.isDown && this.findEntitybyCoord(x,y-1) == false) this.game.player.moveUp()
+    			else if (this.cursors.down.isDown && this.findEntitybyCoord(x,y+1) == false) this.game.player.moveDown()
 				else if (this.cursors.pickup.isDown) this.game.player.getItem(this.inventory)
     			else if (this.cursors.space.isDown) {
     				var portee = 5

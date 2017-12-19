@@ -124,7 +124,7 @@ func (m *Manager) Reader(conn *websocket.Conn, cli *hub.Client) {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				clog.Error("HTTPServer", "Reader", "%v", err)
+				clog.Error("HTTPServer", "Reader", "%v - %s", err, message)
 			}
 			return
 		}

@@ -24,8 +24,8 @@ func (W *WORLD) findSpawnPlace() (int, int) {
 	for {
 		// x := rand.Intn(W.Map.Width)
 		// y := rand.Intn(W.Map.Height)
-		x := rand.Intn(30)
-		y := rand.Intn(30)
+		x := rand.Intn(500)
+		y := rand.Intn(500)
 		if W.tileIsFree(x, y) {
 			return x, y
 		}
@@ -94,7 +94,7 @@ func (W *WORLD) tileIsFree(x, y int) bool {
 	i := W.TilesList[W.Map.Items[x][y].ID]
 	f := W.TilesList[W.Map.Over[x][y]]
 
-	if !b.Block && !i.Block && !f.Block {
+	if !b.Block && !i.Block && !f.Block && W.Map.Entities[x][y] == nil {
 		return true
 	}
 	return false
@@ -191,13 +191,14 @@ func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
 	if err != nil {
 		infos = &USER{
 			Entity: Entity{
-				ID: c.Name, Type: "P", Face: "h1", Dir: "down", X: 25, Y: 25,
+				ID: c.Name, Type: "P", Face: "h1", Dir: "down",
 			},
 			Attributes: Attributes{
 				PV: 15, Starv: 15, Thirst: 15,
 			},
 			Inventory: make([]ITEM, 10),
 		}
+		infos.X, infos.Y = W.findSpawnPlace()
 		dat, err = json.Marshal(infos)
 		if err != nil {
 			clog.Error("World", "logUser", "Cant create user %s", err)

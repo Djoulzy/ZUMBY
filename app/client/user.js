@@ -10,7 +10,7 @@ class User
 		this.Y = starty
 		this.dest_X = startx
 	    this.dest_Y = starty
-		this.step = this.game.Properties.step
+		this.step = game.Properties.step
 		this.inGame = false
 		this.PlayerIsMoving = false
 		// this.line = new Phaser.Line(0, 0, 100, 100);

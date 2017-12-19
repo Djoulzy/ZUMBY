@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	_FILEDB_PATH_ = "../../FileDB/"
+	_FILEDB_PATH_ = "../../FileDB"
 )
 
 func SaveUser(ID string, json []byte) {

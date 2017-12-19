@@ -5,16 +5,15 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"net/url"
 	"sync"
 	"time"
 
-	"github.com/Djoulzy/ZUMBY/urlcrypt"
 	"github.com/Djoulzy/Tools/clog"
 	"github.com/Djoulzy/Tools/config"
+	"github.com/Djoulzy/ZUMBY/urlcrypt"
 	"github.com/gorilla/websocket"
 )
 
@@ -92,13 +91,14 @@ func (c *Conn) readPump() {
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		cmd_group := string(message[0:6])
-		action_group := message[6:]
-		if cmd_group == "[RDCT]" {
-			go TryRedirect(c, string(action_group))
-			break
-		}
+		// message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		// cmd_group := string(message[0:6])
+		// action_group := message[6:]
+		// if cmd_group == "[RDCT]" {
+		// 	go TryRedirect(c, string(action_group))
+		// 	break
+		// }
+		clog.Trace("", "", "%s", message)
 	}
 }
 
@@ -169,7 +169,7 @@ func main() {
 		HEX_IV:    []byte(conf.HEX_IV),
 	}
 
-	for i := 0; i < 5000; i++ {
+	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go connect(i, u)
 		wg.Wait()
@@ -177,6 +177,8 @@ func main() {
 		connString, _ := cryptor.Encrypt_b64(passPhrase)
 		clog.Debug("test_load", "main", "Connecting %s [%s] ...", passPhrase, connString)
 		Clients[i].send <- append([]byte("[HELO]"), []byte(connString)...)
+		duration := time.Second / 10
+		time.Sleep(duration)
 	}
 
 	// duration := time.Second

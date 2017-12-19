@@ -10,6 +10,8 @@ class Local extends User
 		this.isPlayer = true
 		this.inDoor = false
 		this.PlayerOrdersCount = 0
+		this.speed = game.Properties.speed
+
 		// this.sprite.body.onMoveComplete.add(this.moveLocalOver, this);
 		// this.graphics.lineStyle(2, 0xffd900, 1);
 		this.bearing = "down"
@@ -107,7 +109,7 @@ class Local extends User
 			this.dest_X = this.X - 1
 			this.dest_Y = this.Y
 			this.sendMoveToServer('left')
-			this.sprite.body.moveTo(speed, step, 180);
+			this.sprite.body.moveTo(this.speed, this.step, 180);
 			this.sprite.animations.play('left');
 		} else {
 			this.PlayerIsMoving = false
@@ -120,7 +122,7 @@ class Local extends User
 			this.dest_X = this.X + 1
 			this.dest_Y = this.Y
 			this.sendMoveToServer('right')
-			this.sprite.body.moveTo(speed, step, 0);
+			this.sprite.body.moveTo(this.speed, this.step, 0);
 			this.sprite.animations.play('right');
 		} else {
 			this.PlayerIsMoving = false
@@ -133,7 +135,7 @@ class Local extends User
 			this.dest_X = this.X
 			this.dest_Y = this.Y - 1
 			this.sendMoveToServer('up')
-			this.sprite.body.moveTo(speed, step, 270);
+			this.sprite.body.moveTo(this.speed, this.step, 270);
 			this.sprite.animations.play('up');
 		} else {
 			this.PlayerIsMoving = false
@@ -146,7 +148,7 @@ class Local extends User
 			this.dest_X = this.X
 			this.dest_Y = this.Y + 1
 			this.sendMoveToServer('down')
-			this.sprite.body.moveTo(speed, step, 90);
+			this.sprite.body.moveTo(this.speed, this.step, 90);
 			this.sprite.animations.play('down');
 		} else {
 			this.PlayerIsMoving = false
