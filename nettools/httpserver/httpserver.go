@@ -263,6 +263,10 @@ func (m *Manager) getMapArea(w http.ResponseWriter, r *http.Request) {
 	w.Write(str)
 }
 
+func (m *Manager) getMonPage(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func (m *Manager) Start(conf *Manager) {
 	m = conf
 
@@ -293,6 +297,7 @@ func (m *Manager) Start(conf *Manager) {
 	http.HandleFunc("/status", m.statusPage)
 	http.HandleFunc("/map/", m.getMapArea)
 	http.HandleFunc("/GameData/", m.getGameData)
+	http.HandleFunc("/mon/", m.getMonPage)
 
 	handler := http.HandlerFunc(m.wsConnect)
 	http.Handle("/ws", throttleClients(handler, m.NBAcceptBySecond))

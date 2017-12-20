@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Djoulzy/ZUMBY/hub"
 	"github.com/Djoulzy/Tools/clog"
+	"github.com/Djoulzy/ZUMBY/hub"
 )
 
 func welcomeNewMonitor(c *hub.Client, newName string, app_id string) {
@@ -22,14 +22,14 @@ func welcomeNewMonitor(c *hub.Client, newName string, app_id string) {
 func welcomeNewUser(c *hub.Client, newName string, app_id string) {
 	if zeHub.UserExists(c.Name, hub.ClientUndefined) {
 		if len(zeHub.Users) >= conf.MaxUsersConns && !zeHub.UserExists(newName, hub.ClientUser) {
-			clog.Warn("server", "welcomeNewUser", "Too many Users connections, rejecting %s (In:%d/Cl:%d).", c.Name, len(zeHub.Incomming), len(zeHub.Users))
+			clog.Warn("CallToAction", "welcomeNewUser", "Too many Users connections, rejecting %s (In:%d/Cl:%d).", c.Name, len(zeHub.Incomming), len(zeHub.Users))
 			if !ScaleList.RedirectConnection(c) {
-				clog.Error("server", "welcomeNewUser", "NO FREE SLOTS !!!")
+				clog.Error("CallToAction", "welcomeNewUser", "NO FREE SLOTS !!!")
 			}
 			zeHub.Unregister <- c
 			// <-c.Consistent
 		} else {
-			clog.Info("server", "welcomeNewUser", "Identifying %s as %s", c.Name, newName)
+			clog.Info("CallToAction", "welcomeNewUser", "Identifying %s as %s", c.Name, newName)
 			zeHub.Newrole(&hub.ConnModifier{Client: c, NewName: newName, NewType: hub.ClientUser})
 			c.App_id = app_id
 			ScaleList.DispatchNewConnection(zeHub, c.Name)
@@ -47,7 +47,7 @@ func welcomeNewUser(c *hub.Client, newName string, app_id string) {
 			}
 		}
 	} else {
-		clog.Warn("server", "welcomeNewUser", "Can't identify client... Disconnecting %s.", c.Name)
+		clog.Warn("CallToAction", "welcomeNewUser", "Can't identify client... Disconnecting %s / %s.", c.Name, newName)
 		zeHub.Unregister <- c
 		// <-c.Consistent
 	}

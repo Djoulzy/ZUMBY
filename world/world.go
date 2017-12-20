@@ -12,6 +12,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/Djoulzy/Tools/clog"
@@ -19,6 +20,8 @@ import (
 	"github.com/Djoulzy/ZUMBY/storage"
 	"github.com/nu7hatch/gouuid"
 )
+
+var lock = &sync.Mutex{}
 
 func (W *WORLD) findSpawnPlace() (int, int) {
 	for {
@@ -51,7 +54,7 @@ func (W *WORLD) spawnMob() {
 		W.Map.Entities[mob.X][mob.Y] = mob
 		W.MobList[mob.ID] = mob
 		W.AOIs.addEntity(mob.X, mob.Y, mob)
-		// clog.Info("WORLD", "spawnMob", "Spawning new mob %s", mob.ID)
+		clog.Info("WORLD", "spawnMob", "Spawning new mob %s", mob.ID)
 		// mess := hub.NewMessage(nil, hub.ClientUser, nil, message)
 		// W.hub.Broadcast <- mess
 	}
@@ -175,14 +178,19 @@ func (W *WORLD) browseMob() {
 }
 
 func (W *WORLD) DropUser(id string) {
+	lock.Lock()
 	user := W.UserList[id]
 	dat, _ := json.Marshal(user)
 	storage.SaveUser(id, dat)
 
-	W.AOIs.dropEntity(user.X, user.Y, user)
-
-	W.Map.Entities[user.X][user.Y] = nil
-	delete(W.UserList, id)
+	if user != nil {
+		W.AOIs.dropEntity(user.X, user.Y, user)
+		W.Map.Entities[user.X][user.Y] = nil
+		delete(W.UserList, id)
+	} else {
+		clog.Warn("World", "DropUser", "Droping non existing user %s", id)
+	}
+	lock.Unlock()
 }
 
 func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
@@ -208,11 +216,11 @@ func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
 		clog.Warn("World", "logUser", "Creating new user %s", dat)
 	} else {
 		err := json.Unmarshal(dat, &infos)
-		if err != nil {
+		if err != nil || infos == nil {
 			clog.Error("World", "logUser", "Corrupted data for user %s : %s", c.Name, err)
 			return dat, errors.New("ko")
 		}
-		clog.Info("World", "logUser", "Registering user %s", infos.ID)
+		clog.Info("World", "logUser", "Registering user %s", infos)
 	}
 
 	infos.hubClient = c
@@ -383,7 +391,8 @@ func (W *WORLD) Run() {
 				W.Map.Draw()
 			}
 			W.sendWorldUpdate()
-			W.Map.genAOI(0, 0, W.AOIWidth, W.AOIHeight)
+			// W.Map.genAOI(0, 0, W.AOIWidth, W.AOIHeight)
+			go W.Map.genImage(W)
 
 			t := time.Now()
 			elapsed := t.Sub(start)

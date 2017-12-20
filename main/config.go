@@ -7,6 +7,8 @@ type ServerID struct {
 type Globals struct {
 	LogLevel     int
 	StartLogging bool
+	setMaxProcs  int
+	maxOpenFiles uint64
 }
 
 type ConnectionLimit struct {
@@ -70,6 +72,8 @@ var conf *AppConfig = &AppConfig{
 	Globals{
 		LogLevel:     4,
 		StartLogging: true,
+		setMaxProcs:  0,
+		maxOpenFiles: 0,
 	},
 	ConnectionLimit{
 		MaxUsersConns:     100,

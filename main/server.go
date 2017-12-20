@@ -71,8 +71,8 @@ func main() {
 	clog.StartLogging = conf.StartLogging
 
 	// System Optims
-	setMaxProcs(2)
-	maxFiles := maxOpenFiles(4096)
+	setMaxProcs(conf.setMaxProcs)
+	maxFiles := maxOpenFiles(conf.maxOpenFiles)
 	////////////////
 
 	totalConn := conf.MaxUsersConns + conf.MaxMonitorsConns + conf.MaxServersConns + conf.MaxIncommingConns

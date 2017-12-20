@@ -28,7 +28,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 512
+	maxMessageSize = 4096
 )
 
 var (
@@ -176,9 +176,10 @@ func main() {
 		passPhrase := fmt.Sprintf("LOAD_%d|wmsa_BR|USER", i)
 		connString, _ := cryptor.Encrypt_b64(passPhrase)
 		clog.Debug("test_load", "main", "Connecting %s [%s] ...", passPhrase, connString)
-		Clients[i].send <- append([]byte("[HELO]"), []byte(connString)...)
-		duration := time.Second / 10
-		time.Sleep(duration)
+		message := fmt.Sprintf("[HELO]%s", connString)
+		Clients[i].send <- []byte(message)
+		// duration := time.Second / 10
+		// time.Sleep(duration)
 	}
 
 	// duration := time.Second

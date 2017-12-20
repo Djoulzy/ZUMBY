@@ -234,13 +234,15 @@ func (M *MapData) Draw() {
 }
 
 func (M *MapData) buildMonPage(AOIWidth, AOIHeight int) {
-	var area string = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon</title></head><body>"
-	for y := 0; y < (M.Height / AOIHeight); y++ {
-		for x := 0; x < (M.Width / AOIWidth); x++ {
-			area = fmt.Sprintf("%s\n<AREA shape='rect' coords='%d,%d,%d,%d' href='assets/%d_%d.png'>", area, x*AOIWidth*32, y*AOIHeight*32, (x+1)*AOIWidth*32, (y+1)*AOIHeight*32, x, y)
+	var area string = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon</title></head><body><map name='map'>"
+	nby := M.Height / AOIHeight
+	nbx := M.Width / AOIWidth
+	for y := 0; y < nby; y++ {
+		for x := 0; x < nbx; x++ {
+			area = fmt.Sprintf("%s\n<AREA shape='rect' coords='%d,%d,%d,%d' href='/map/%d_%d'>", area, x*AOIWidth, y*AOIHeight, (x+1)*AOIWidth, (y+1)*AOIHeight, x, y)
 		}
 	}
-	area = fmt.Sprintf("%s\n<img USEMAP='#map' src='assets/mon.png' /></body></html>", area)
+	area = fmt.Sprintf("%s\n</map>\n<img USEMAP='#map' src='assets/mon.png' /></body></html>", area)
 	f, _ := os.OpenFile("../public/mon.html", os.O_WRONLY|os.O_CREATE, 0600)
 	defer f.Close()
 	f.WriteString(area)
@@ -286,13 +288,12 @@ func (M *MapData) genAOI(x, y, AOIWidth, AOIHeight int) {
 	png.Encode(f, img)
 }
 
-func (M *MapData) genImage() {
+func (M *MapData) genImage(W *WORLD) {
 	img := image.NewRGBA(image.Rect(0, 0, M.Width, M.Height))
 
 	for y := 0; y < M.Height; y++ {
 		for x := 0; x < M.Width; x++ {
-			val := M.Ground[x][y]
-			if val == 0 {
+			if W.tileIsFree(x, y) {
 				img.Set(x, y, color.RGBA{0, 0, 0, 255})
 			} else {
 				img.Set(x, y, color.RGBA{255, 255, 255, 255})

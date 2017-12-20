@@ -221,7 +221,7 @@ func (h *Hub) unicast(message *Message) {
 
 func (h *Hub) action(message *Message) {
 	// clog.Debug("Hub", "action", "Message %s : %s", message.Dest.Name, message.Content)
-	message.Dest.CallToAction(message.Dest, message.Content)
+	go message.Dest.CallToAction(message.Dest, message.Content)
 }
 
 func (h *Hub) Run() {
@@ -247,9 +247,9 @@ func (h *Hub) Run() {
 		case message := <-h.Broadcast:
 			h.broadcast(message)
 		case message := <-h.Unicast:
-			go h.unicast(message)
+			h.unicast(message)
 		case message := <-h.Action:
-			go h.action(message)
+			h.action(message)
 		case <-h.Done:
 			return
 		}
