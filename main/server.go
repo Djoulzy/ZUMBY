@@ -138,6 +138,7 @@ func main() {
 		MapGenCallback:   zeWorld.GetMapArea,
 		ClientDisconnect: zeWorld.DropUser,
 		GetTilesList:     zeWorld.GetTilesList,
+		GetMapImg:        zeWorld.GetMapImg,
 		WorldWidth:       conf.AOIWidth,
 		WorldHeight:      conf.AOIHeight,
 	}

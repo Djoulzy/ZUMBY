@@ -44,6 +44,7 @@ type Manager struct {
 	Cryptor          *urlcrypt.Cypher
 	MapGenCallback   func(x, y int) []byte
 	GetTilesList     func() []byte
+	GetMapImg        func(x, y int) string
 	ClientDisconnect func(string)
 	WorldWidth       int
 	WorldHeight      int
@@ -264,7 +265,20 @@ func (m *Manager) getMapArea(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *Manager) getMonPage(w http.ResponseWriter, r *http.Request) {
+	query := strings.Split(string(r.URL.Path[1:]), "/")
+	coord := strings.Split(query[1], "_")
 
+	if len(coord) == 2 {
+		x, _ := strconv.Atoi(coord[0])
+		y, _ := strconv.Atoi(coord[1])
+		page := m.GetMapImg(x, y)
+		w.Write([]byte(page))
+	} else {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Content-Type", "text/html")
+		m.GetMapImg(-1, -1)
+		http.ServeFile(w, r, "../public/mon.html")
+	}
 }
 
 func (m *Manager) Start(conf *Manager) {

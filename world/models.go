@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Djoulzy/Tools/cmap"
 	"github.com/Djoulzy/ZUMBY/hub"
 )
 
@@ -57,9 +58,11 @@ type TILE struct {
 }
 
 type WORLD struct {
-	hub       *hub.Hub
-	MobList   map[string]*MOB
-	UserList  map[string]*USER
+	hub *hub.Hub
+	// MobList   map[string]*MOB
+	MobList *cmap.CMap
+	// UserList  map[string]*USER
+	UserList  *cmap.CMap
 	TilesList []TILE
 	Map       *MapData
 	AOIs      *AOIList

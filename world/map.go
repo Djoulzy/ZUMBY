@@ -233,21 +233,6 @@ func (M *MapData) Draw() {
 	fmt.Printf("%s", display)
 }
 
-func (M *MapData) buildMonPage(AOIWidth, AOIHeight int) {
-	var area string = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon</title></head><body><map name='map'>"
-	nby := M.Height / AOIHeight
-	nbx := M.Width / AOIWidth
-	for y := 0; y < nby; y++ {
-		for x := 0; x < nbx; x++ {
-			area = fmt.Sprintf("%s\n<AREA shape='rect' coords='%d,%d,%d,%d' href='/map/%d_%d'>", area, x*AOIWidth, y*AOIHeight, (x+1)*AOIWidth, (y+1)*AOIHeight, x, y)
-		}
-	}
-	area = fmt.Sprintf("%s\n</map>\n<img USEMAP='#map' src='assets/mon.png' /></body></html>", area)
-	f, _ := os.OpenFile("../public/mon.html", os.O_WRONLY|os.O_CREATE, 0600)
-	defer f.Close()
-	f.WriteString(area)
-}
-
 func drawRect(img *image.RGBA, x, y, width, height int, c color.Color) {
 	for ry := 0; ry < height; ry++ {
 		for rx := 0; rx < width; rx++ {
@@ -256,17 +241,16 @@ func drawRect(img *image.RGBA, x, y, width, height int, c color.Color) {
 	}
 }
 
-func (M *MapData) genAOI(x, y, AOIWidth, AOIHeight int) {
+func (M *MapData) genAOIImage(x, y int, W *WORLD) string {
 	pixel := 11
-	img := image.NewRGBA(image.Rect(0, 0, AOIWidth*pixel, AOIHeight*pixel))
+	img := image.NewRGBA(image.Rect(0, 0, W.AOIWidth*pixel, W.AOIHeight*pixel))
 
-	startx := x * AOIWidth
-	starty := y * AOIHeight
+	startx := x * W.AOIWidth
+	starty := y * W.AOIHeight
 
-	for aoiy := 0; aoiy < AOIHeight; aoiy++ {
-		for aoix := 0; aoix < AOIWidth; aoix++ {
-			val := M.Ground[startx+aoix][starty+aoiy]
-			if val == 0 {
+	for aoiy := 0; aoiy < W.AOIHeight; aoiy++ {
+		for aoix := 0; aoix < W.AOIWidth; aoix++ {
+			if W.tileIsFree(startx+aoix, starty+aoiy) {
 				drawRect(img, aoix*pixel, aoiy*pixel, pixel, pixel, color.RGBA{0, 0, 0, 255})
 			} else {
 				drawRect(img, aoix*pixel, aoiy*pixel, pixel, pixel, color.RGBA{255, 255, 255, 255})
@@ -283,12 +267,18 @@ func (M *MapData) genAOI(x, y, AOIWidth, AOIHeight int) {
 	}
 
 	// Save to out.png
-	f, _ := os.OpenFile("../public/assets/0_0.png", os.O_WRONLY|os.O_CREATE, 0600)
+	name := fmt.Sprintf("../public/assets/%d_%d.png", x, y)
+	f, _ := os.OpenFile(name, os.O_WRONLY|os.O_CREATE, 0600)
 	defer f.Close()
 	png.Encode(f, img)
+	var area string = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon</title>"
+	area = fmt.Sprintf("%s<meta http-equiv='refresh' content='5' /></head><body>", area)
+	area = fmt.Sprintf("%s\n<img src='/client/assets/%d_%d.png' /></body></html>", area, x, y)
+
+	return area
 }
 
-func (M *MapData) genImage(W *WORLD) {
+func (M *MapData) genWorldImage(W *WORLD) {
 	img := image.NewRGBA(image.Rect(0, 0, M.Width, M.Height))
 
 	for y := 0; y < M.Height; y++ {
@@ -313,4 +303,22 @@ func (M *MapData) genImage(W *WORLD) {
 	f, _ := os.OpenFile("../public/assets/mon.png", os.O_WRONLY|os.O_CREATE, 0600)
 	defer f.Close()
 	png.Encode(f, img)
+}
+
+func (M *MapData) buildMonPage(W *WORLD) {
+	var area string = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon Global</title>"
+	area = fmt.Sprintf("%s<meta http-equiv='refresh' content='5' /></head><body><map name='map'>", area)
+	nby := M.Height / W.AOIHeight
+	nbx := M.Width / W.AOIWidth
+
+	M.genWorldImage(W)
+	for y := 0; y < nby; y++ {
+		for x := 0; x < nbx; x++ {
+			area = fmt.Sprintf("%s\n<AREA shape='rect' coords='%d,%d,%d,%d' href='/mon/%d_%d'>", area, x*W.AOIWidth, y*W.AOIHeight, (x+1)*W.AOIWidth, (y+1)*W.AOIHeight, x, y)
+		}
+	}
+	area = fmt.Sprintf("%s\n</map>\n<img USEMAP='#map' src='/client/assets/mon.png' /></body></html>", area)
+	f, _ := os.OpenFile("../public/mon.html", os.O_WRONLY|os.O_CREATE, 0600)
+	defer f.Close()
+	f.WriteString(area)
 }
