@@ -196,9 +196,9 @@ func main() {
 	for {
 		// mu.Lock()
 		for index, client := range Clients {
-			connString := fmt.Sprintf("LOAD_%d", index)
+			// connString := fmt.Sprintf("LOAD_%d", index)
 			if client.ws != nil {
-				client.send <- append([]byte("[BCST]"), []byte(connString)...)
+				// client.send <- append([]byte("[BCST]"), []byte(connString)...)
 				duration := time.Second
 				time.Sleep(duration)
 			} else {

@@ -179,11 +179,10 @@ func (W *WORLD) browseMob() {
 
 func (W *WORLD) DropUser(id string) {
 	item, _ := W.UserList.Get(id)
-	user := item.(*USER)
-	dat, _ := json.Marshal(user)
-	storage.SaveUser(id, dat)
-
-	if user != nil {
+	if item != nil {
+		user := item.(*USER)
+		dat, _ := json.Marshal(user)
+		storage.SaveUser(id, dat)
 		W.AOIs.dropEntity(user.X, user.Y, user)
 		W.Map.Entities[user.X][user.Y] = nil
 		W.UserList.Delete(id)
@@ -219,14 +218,13 @@ func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
 			clog.Error("World", "logUser", "Corrupted data for user %s : %s", c.Name, err)
 			return dat, errors.New("ko")
 		}
-		clog.Info("World", "logUser", "Registering user %s", infos)
+		clog.Info("World", "logUser", "Registering user %s", infos.ID)
 	}
 
 	infos.hubClient = c
 
 	message := W.AOIs.getAOIEntities(infos.X, infos.Y)
 	mess := hub.NewMessage(nil, hub.ClientUser, c, message)
-	clog.Test("World", "LogUser", "%s", message)
 	W.hub.Unicast <- mess
 	clog.Service("World", "Run", "%s is now connected...", c.Name)
 

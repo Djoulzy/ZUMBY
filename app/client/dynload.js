@@ -17,9 +17,14 @@ class DynLoad
     }
 
     loadUser(key, callback) {
-        console.log("Added new png to load queue: "+key)
-        this.game.load.spritesheet(key, 'http://'+Config.MMOServer.Host+'/data/'+key+'.png', 32, 32);
-        this.queue.set(key, callback)
+        if (this.game.cache.checkImageKey(key)) {
+            console.log("Image found in cache: "+key)
+            callback(key)
+        } else {
+            console.log("Added new png to load queue: "+key)
+            this.game.load.spritesheet(key, 'http://'+Config.MMOServer.Host+'/data/'+key+'.png', 32, 32);
+            this.queue.set(key, callback)
+        }
     }
 
     emptyQueue() {

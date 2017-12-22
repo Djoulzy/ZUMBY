@@ -272,7 +272,7 @@ func (M *MapData) genAOIImage(x, y int, W *WORLD) string {
 	defer f.Close()
 	png.Encode(f, img)
 	var area string = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon</title>"
-	area = fmt.Sprintf("%s<meta http-equiv='refresh' content='5' /></head><body>", area)
+	area = fmt.Sprintf("%s<meta http-equiv='refresh' content='1' /></head><body>", area)
 	area = fmt.Sprintf("%s\n<img src='/client/assets/%d_%d.png' /></body></html>", area, x, y)
 
 	return area
@@ -307,7 +307,7 @@ func (M *MapData) genWorldImage(W *WORLD) {
 
 func (M *MapData) buildMonPage(W *WORLD) {
 	var area string = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon Global</title>"
-	area = fmt.Sprintf("%s<meta http-equiv='refresh' content='5' /></head><body><map name='map'>", area)
+	area = fmt.Sprintf("%s<meta http-equiv='refresh' content='1' /></head><body><map name='map'>", area)
 	nby := M.Height / W.AOIHeight
 	nbx := M.Width / W.AOIWidth
 

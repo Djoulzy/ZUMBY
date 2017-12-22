@@ -93,6 +93,9 @@ func (aoi *AOI) addEntity(entity interface{}) {
 			aoi.EntitiesList[typedEnt.ID] = entity
 		}
 	}
+	json, _ := json.Marshal(entity)
+	message := []byte(fmt.Sprintf("[NENT]%s", json))
+	aoi.addEvent(message)
 }
 
 // func (L *AOIList) addItemsToAOI(items [][]ITEM) {
@@ -131,9 +134,6 @@ func (L *AOIList) moveEntity(x, y int, entity interface{}) {
 func (L *AOIList) addEntity(x, y int, entity interface{}) {
 	aoi := L.getAOIfromCoord(x, y)
 	aoi.addEntity(entity)
-	json, _ := json.Marshal(entity)
-	message := []byte(fmt.Sprintf("[NENT]%s", json))
-	aoi.addEvent(message)
 }
 
 func (L *AOIList) dropEntity(x, y int, entity interface{}) {
