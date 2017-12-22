@@ -25,7 +25,7 @@ class Remote extends User
 	// }
 
 	moveOver() {
-		this.adjustSpritePosition()
+		this.adjustSpritePosition(this.dest_X, this.dest_Y)
 		this.PlayerIsMoving = false
 		if (this.moves.length == 0) {
 			this.sprite.animations.stop();

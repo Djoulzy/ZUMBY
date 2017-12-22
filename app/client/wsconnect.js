@@ -67,6 +67,11 @@ var Connection = function (addr, callback) {
 					var obj = JSON.parse(cmd[i].substr(6))
 					connEvt["chat_message"](obj)
 					break;
+				case "[GOXY]":
+					var obj = JSON.parse(cmd[i].substr(6))
+					console.log(obj)
+					connEvt["set_location"](obj)
+					break;
 	    		default:;
 	    	}
 		}

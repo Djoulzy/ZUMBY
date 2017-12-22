@@ -289,14 +289,18 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 		if err == nil {
 			item, _ := W.UserList.Get(infos.ID)
 			user := item.(*USER)
-			W.Map.Entities[user.X][user.Y] = nil
-			user.X = infos.X
-			user.Y = infos.Y
-			W.Map.Entities[user.X][user.Y] = user
-			mess := []byte(fmt.Sprintf("[BCST]%s", message))
-			W.AOIs.addEvent(infos.X, infos.Y, mess)
-			// case "[LAOI]":
-			// 	W.AOIs.getAOISetupForPlayer(infos.X, infos.Y)
+			if W.tileIsFree(infos.X, infos.Y) {
+				W.Map.Entities[user.X][user.Y] = nil
+				user.X = infos.X
+				user.Y = infos.Y
+				W.Map.Entities[user.X][user.Y] = user
+				mess := []byte(fmt.Sprintf("[BCST]%s", message))
+				W.AOIs.addEvent(infos.X, infos.Y, mess)
+			} else {
+				tmp := []byte(fmt.Sprintf("[GOXY]{\"id\":\"%s\",\"x\":%d,\"y\":%d}", user.ID, user.X, user.Y))
+				mess := hub.NewMessage(nil, hub.ClientUser, user.hubClient, tmp)
+				W.hub.Unicast <- mess
+			}
 		} else {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}

@@ -88,7 +88,7 @@ class Local extends User
 	}
 
 	moveOver() {
-		this.adjustSpritePosition()
+		this.adjustSpritePosition(this.dest_X, this.dest_Y)
 		this.PlayerIsMoving = false
 		this.sprite.animations.stop();
 		var tile = this.game.WorldMap.getTileInArea(this.X, this.Y)

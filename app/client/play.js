@@ -57,11 +57,12 @@ Play.prototype = {
 		this.game.socket = new Connection(Config.MMOServer.Host, this.onSocketConnected.bind(this))
        	this.game.socket.on("userlogged", this.onUserLogged.bind(this))
 		this.game.socket.on("new_entity", this.newEntitie.bind(this))
-      	this.game.socket.on("enemy_move", this.onEnemyMove.bind(this));
-      	this.game.socket.on("kill_enemy", this.onRemoveEntity.bind(this));
-      	this.game.socket.on("hide_item", this.onRemoveItem.bind(this));
-		this.game.socket.on("show_item", this.onAddItem.bind(this));
-      	this.game.socket.on("chat_message", this.game.Chat.addMessage.bind(this.game.Chat));
+      	this.game.socket.on("enemy_move", this.onEnemyMove.bind(this))
+      	this.game.socket.on("kill_enemy", this.onRemoveEntity.bind(this))
+      	this.game.socket.on("hide_item", this.onRemoveItem.bind(this))
+		this.game.socket.on("show_item", this.onAddItem.bind(this))
+		this.game.socket.on("chat_message", this.game.Chat.addMessage.bind(this.game.Chat))
+		this.game.socket.on("set_location", this.onSetLocation.bind(this))
     },
 
 	findGetParameter: function(parameterName) {
@@ -92,6 +93,14 @@ Play.prototype = {
 		if (data.owner == this.game.Properties.pseudo) {
 			this.inventory.addItem(data.id, data.tp)
 		}
+	},
+
+	onSetLocation: function(data) {
+		var entity
+		if (data.id == this.game.Properties.pseudo) entity = this.game.player
+		else entity = this.findEntitybyID(data.id)
+		entity.X = data.x
+		entity.Y = data.y
 	},
 
 	onAddItem: function(data) {

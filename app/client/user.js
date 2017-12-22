@@ -35,14 +35,14 @@ class User
 		this.initAnims()
 	}
 
-	adjustSpritePosition() {
-		var markerx = this.game.math.snapToFloor(Math.ceil(this.dest_X*this.step), this.step)
-		var markery = this.game.math.snapToFloor(Math.ceil(this.dest_Y*this.step), this.step)
+	adjustSpritePosition(x, y) {
+		var markerx = this.game.math.snapToFloor(Math.ceil(x*this.step), this.step)
+		var markery = this.game.math.snapToFloor(Math.ceil(y*this.step), this.step)
 		// console.log("Adjusting : x="+this.sprite.body.x+" y="+this.sprite.body.y+" -> x="+ markerx +" y="+markery)
 		this.sprite.body.x = markerx
 		this.sprite.body.y = markery
-		this.X = this.dest_X
-		this.Y = this.dest_Y
+		this.X = x
+		this.Y = y
 		// this.graphics.clear();
 	}
 
