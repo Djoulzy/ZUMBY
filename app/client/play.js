@@ -99,8 +99,10 @@ Play.prototype = {
 		var entity
 		if (data.id == this.game.Properties.pseudo) entity = this.game.player
 		else entity = this.findEntitybyID(data.id)
-		entity.X = data.x
-		entity.Y = data.y
+		console.log("Readjusting "+data.id+" to "+data.x+" x "+data.y)
+		entity.dest_X = data.x
+		entity.dest_Y = data.y
+		entity.moveOver()
 	},
 
 	onAddItem: function(data) {
