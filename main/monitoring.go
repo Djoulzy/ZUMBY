@@ -16,7 +16,7 @@ import (
 
 const statsTimer = 5 * time.Second
 
-type ClientList map[string]*Client
+type hubClientList map[string]*hubClient
 
 type Brother struct {
 	Tcpaddr  string
@@ -52,10 +52,10 @@ type BrotherList struct {
 	BRTHLST map[string]Brother
 }
 
-type ClientsRegister struct {
-	ID   ClientList
-	Name ClientList
-	Type map[int]ClientList
+type hubClientsRegister struct {
+	ID   hubClientList
+	Name hubClientList
+	Type map[int]hubClientList
 }
 
 type MonParams struct {
@@ -72,7 +72,7 @@ var StartTime time.Time
 var UpTime time.Duration
 var MachineLoad *load.AvgStat
 var nbcpu int
-var cr ClientsRegister
+var cr hubClientsRegister
 var AddBrother = make(chan map[string]Brother)
 var brotherlist = make(map[string]Brother)
 
@@ -92,7 +92,7 @@ func addToBrothersList(srv map[string]Brother) {
 	}
 }
 
-func LoadAverage(h *Hub, p *MonParams) {
+func LoadAverage(h *hubManager, p *MonParams) {
 	ticker := time.NewTicker(statsTimer)
 	MachineLoad = &load.AvgStat{0, 0, 0}
 	nbcpu, _ := cpu.Counts(true)
@@ -106,7 +106,7 @@ func LoadAverage(h *Hub, p *MonParams) {
 			tmp, _ := load.Avg()
 			MachineLoad = tmp
 			loadIndice := int(math.Ceil((((MachineLoad.Load1*5 + MachineLoad.Load5*3 + MachineLoad.Load15*2) / 10) / float64(nbcpu)) * 100))
-			// mess := NewMessage(nil, machineLoad.String())
+			// mess := NewdataMessage(nil, machineLoad.String())
 			t := time.Now()
 			UpTime = time.Since(StartTime)
 
@@ -146,11 +146,11 @@ func LoadAverage(h *Hub, p *MonParams) {
 			} else {
 				if len(h.Monitors)+len(h.Servers) > 0 {
 					h.SentMessByTicks = 0
-					mess := NewMessage(nil, ClientMonitor, nil, json)
+					mess := newDatamessage(nil, clientMonitor, nil, json)
 					h.Broadcast <- mess
-					mess = NewMessage(nil, ClientServer, nil, append([]byte("[MNIT]"), json...))
+					mess = newDatamessage(nil, clientServer, nil, append([]byte("[MNIT]"), json...))
 					h.Broadcast <- mess
-					mess = NewMessage(nil, ClientUser, nil, append([]byte("[FLBK]"), brth_json...))
+					mess = newDatamessage(nil, clientUser, nil, append([]byte("[FLBK]"), brth_json...))
 					h.Broadcast <- mess
 				}
 			}
@@ -161,7 +161,7 @@ func LoadAverage(h *Hub, p *MonParams) {
 	}()
 }
 
-func MonStart(hub *Hub, p *MonParams) {
+func MonStart(hub *hubManager, p *MonParams) {
 	// addToBrothersList(list)
 	LoadAverage(hub, p)
 }

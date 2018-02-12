@@ -10,15 +10,15 @@ import (
 )
 
 const (
-	ClientUndefined = 0
-	ClientUser      = 1
-	ClientServer    = 2
-	ClientMonitor   = 3
-	Everybody       = 4
+	clientUndefined = 0
+	clientUser      = 1
+	clientServer    = 2
+	clientMonitor   = 3
+	everybody       = 4
 	timeStep        = 100 * time.Millisecond // Actualisation 10 par seconde
 )
 
-var CTYpeName = [4]string{"Incomming", "Users", "Servers", "Monitors"}
+var clientTypeName = [4]string{"Incomming", "Users", "Servers", "Monitors"}
 
 // const (
 // 	ReadOnly  = 1
@@ -26,85 +26,83 @@ var CTYpeName = [4]string{"Incomming", "Users", "Servers", "Monitors"}
 // 	ReadWrite = 3
 // )
 
-type CallToActionFunc func(*Client, []byte)
+type callToActionFunc func(*hubClient, []byte)
 
-// Client is a middleman between the websocket connection and the hub.
-type Client struct {
+// hubClient is a middleman between the websocket connection and the hub.
+type hubClient struct {
 	ID           string
 	Send         chan []byte
 	Enqueue      chan []byte
 	Quit         chan bool
-	CallToAction CallToActionFunc
+	CallToAction callToActionFunc
 
-	Addr       string
-	CType      int
-	Name       string
-	Content_id int
-	Front_id   string
-	App_id     string
-	Country    string
-	User_agent string
+	Addr      string
+	CType     int
+	Name      string
+	AppID     string
+	Country   string
+	UserAgent string
 }
 
-type Message struct {
+type dataMessage struct {
 	Level    int
-	From     *Client
+	From     *hubClient
 	UserType int
-	Dest     *Client
+	Dest     *hubClient
 	Content  []byte
 }
 
-var BroadcastQueue [][]byte
+var broadcastQueue [][]byte
 
-type ConnModifier struct {
-	Client  *Client
-	NewName string
-	NewType int
+type connModifier struct {
+	hubClient *hubClient
+	NewName   string
+	NewType   int
 }
 
-type Hub struct {
+type hubManager struct {
 	// Registered clients.
-	Incomming map[string]*Client
-	Users     map[string]*Client
-	Servers   map[string]*Client
-	Monitors  map[string]*Client
+	Incomming map[string]*hubClient
+	Users     map[string]*hubClient
+	Servers   map[string]*hubClient
+	Monitors  map[string]*hubClient
 
 	SentMessByTicks int
 
-	FullUsersList [4](map[string]*Client)
+	FullUsersList [4](map[string]*hubClient)
 
 	// Inbound messages from the clients.
-	Register   chan *Client
-	Unregister chan *Client
-	Broadcast  chan *Message
-	// Status     chan *Message
-	Unicast chan *Message
-	Action  chan *Message
+	Register   chan *hubClient
+	Unregister chan *hubClient
+	Broadcast  chan *dataMessage
+	// Status     chan *dataMessage
+	Unicast chan *dataMessage
+	Action  chan *dataMessage
 	Done    chan bool
 }
 
-func NewHub() *Hub {
-	hub := &Hub{
-		Register:   make(chan *Client),
-		Unregister: make(chan *Client),
+func newhubManager() *hubManager {
+	hub := &hubManager{
+		Register:   make(chan *hubClient),
+		Unregister: make(chan *hubClient),
 
-		Broadcast: make(chan *Message),
-		// Status:    make(chan *Message),
-		Unicast: make(chan *Message),
-		Action:  make(chan *Message),
+		Broadcast: make(chan *dataMessage),
+		// Status:    make(chan *dataMessage),
+		Unicast: make(chan *dataMessage),
+		Action:  make(chan *dataMessage),
 		Done:    make(chan bool),
 
-		Users:     make(map[string]*Client),
-		Incomming: make(map[string]*Client),
-		Servers:   make(map[string]*Client),
-		Monitors:  make(map[string]*Client),
+		Users:     make(map[string]*hubClient),
+		Incomming: make(map[string]*hubClient),
+		Servers:   make(map[string]*hubClient),
+		Monitors:  make(map[string]*hubClient),
 	}
-	hub.FullUsersList = [4](map[string]*Client){hub.Incomming, hub.Users, hub.Servers, hub.Monitors}
+	hub.FullUsersList = [4](map[string]*hubClient){hub.Incomming, hub.Users, hub.Servers, hub.Monitors}
 	return hub
 }
 
-func NewMessage(from *Client, userType int, c *Client, content []byte) *Message {
-	m := &Message{
+func newDatamessage(from *hubClient, userType int, c *hubClient, content []byte) *dataMessage {
+	m := &dataMessage{
 		Level:    1,
 		From:     from,
 		UserType: userType,
@@ -114,19 +112,18 @@ func NewMessage(from *Client, userType int, c *Client, content []byte) *Message 
 	return m
 }
 
-func (h *Hub) GetClientByName(name string, userType int) *Client {
+func (h *hubManager) gethubClientByName(name string, userType int) *hubClient {
 	return h.FullUsersList[userType][name]
 }
 
-func (h *Hub) UserExists(name string, userType int) bool {
+func (h *hubManager) userExists(name string, userType int) bool {
 	if h.FullUsersList[userType][name] != nil {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
-func (h *Hub) IsRegistered(client *Client) bool {
+func (h *hubManager) isRegistered(client *hubClient) bool {
 	if h.FullUsersList[client.CType][client.Name] != nil {
 		if h.FullUsersList[client.CType][client.Name].ID == client.ID {
 			return true
@@ -135,20 +132,20 @@ func (h *Hub) IsRegistered(client *Client) bool {
 	return false
 }
 
-func (h *Hub) register(client *Client) {
+func (h *hubManager) register(client *hubClient) {
 	client.ID = fmt.Sprintf("%p", client)
 
-	if h.UserExists(client.Name, client.CType) {
-		clog.Warn("Hub", "Register", "Client %s already exists ... replacing", client.Name)
+	if h.userExists(client.Name, client.CType) {
+		clog.Warn("hubManager", "Register", "hubClient %s already exists ... replacing", client.Name)
 		h.unregister(h.FullUsersList[client.CType][client.Name])
 	}
 
 	h.FullUsersList[client.CType][client.Name] = client
-	clog.Info("Hub", "Register", "Client %s registered [%s] as %s.", client.Name, client.ID, CTYpeName[client.CType])
+	clog.Info("hubManager", "Register", "hubClient %s registered [%s] as %s.", client.Name, client.ID, clientTypeName[client.CType])
 }
 
-func (h *Hub) unregister(client *Client) {
-	if h.IsRegistered(client) {
+func (h *hubManager) unregister(client *hubClient) {
+	if h.isRegistered(client) {
 		delete(h.FullUsersList[client.CType], client.Name)
 
 		select {
@@ -158,7 +155,7 @@ func (h *Hub) unregister(client *Client) {
 		close(client.Send)
 		close(client.Quit)
 
-		if client.CType == ClientServer {
+		if client.CType == clientServer {
 			data := struct {
 				SID  string
 				DOWN bool
@@ -167,29 +164,29 @@ func (h *Hub) unregister(client *Client) {
 				true,
 			}
 			json, _ := json.Marshal(data)
-			mess := NewMessage(client, ClientMonitor, nil, json)
-			clog.Trace("Hub", "Unregister", "Broadcasting close of server %s : %s", client.Name, json)
+			mess := newDatamessage(client, clientMonitor, nil, json)
+			clog.Trace("hubManager", "Unregister", "Broadcasting close of server %s : %s", client.Name, json)
 			h.broadcast(mess)
 		}
-		clog.Info("Hub", "Unregister", "Client %s unregistered [%s] from %s.", client.Name, client.ID, CTYpeName[client.CType])
+		clog.Info("hubManager", "Unregister", "hubClient %s unregistered [%s] from %s.", client.Name, client.ID, clientTypeName[client.CType])
 	}
 }
 
-func (h *Hub) Newrole(modif *ConnModifier) {
-	if h.UserExists(modif.NewName, modif.NewType) {
-		clog.Warn("Hub", "Newrole", "Client already exists ... Deleting")
-		h.unregister(h.GetClientByName(modif.NewName, modif.NewType))
+func (h *hubManager) newRole(modif *connModifier) {
+	if h.userExists(modif.NewName, modif.NewType) {
+		clog.Warn("hubManager", "Newrole", "hubClient already exists ... Deleting")
+		h.unregister(h.gethubClientByName(modif.NewName, modif.NewType))
 	}
-	delete(h.FullUsersList[modif.Client.CType], modif.Client.Name)
-	modif.Client.Name = modif.NewName
-	modif.Client.CType = modif.NewType
-	h.FullUsersList[modif.NewType][modif.NewName] = modif.Client
+	delete(h.FullUsersList[modif.hubClient.CType], modif.hubClient.Name)
+	modif.hubClient.Name = modif.NewName
+	modif.hubClient.CType = modif.NewType
+	h.FullUsersList[modif.NewType][modif.NewName] = modif.hubClient
 }
 
-func (h *Hub) broadcast(message *Message) {
-	if message.UserType == ClientUser {
-		BroadcastQueue = append(BroadcastQueue, message.Content)
-		// clog.Info("Hub", "broadcast", "New message queued: (%d) - %s", len(BroadcastQueue), message.Content)
+func (h *hubManager) broadcast(message *dataMessage) {
+	if message.UserType == clientUser {
+		broadcastQueue = append(broadcastQueue, message.Content)
+		// clog.Info("hubManager", "broadcast", "New message queued: (%d) - %s", len(BroadcastQueue), message.Content)
 		h.flushBroadcastQueue()
 	} else {
 		list := h.FullUsersList[message.UserType]
@@ -200,31 +197,31 @@ func (h *Hub) broadcast(message *Message) {
 	}
 }
 
-func (h *Hub) flushBroadcastQueue() {
-	list := h.FullUsersList[ClientUser]
-	for i, mess := range BroadcastQueue {
+func (h *hubManager) flushBroadcastQueue() {
+	list := h.FullUsersList[clientUser]
+	for i, mess := range broadcastQueue {
 		for _, client := range list {
 			client.Send <- mess
 			h.SentMessByTicks++
 		}
-		BroadcastQueue[i] = nil
+		broadcastQueue[i] = nil
 	}
-	BroadcastQueue = BroadcastQueue[:0]
-	// clog.Debug("Hub", "flushBroadcastQueue", "Queue flushed")
+	broadcastQueue = broadcastQueue[:0]
+	// clog.Debug("hubManager", "flushBroadcastQueue", "Queue flushed")
 }
 
-func (h *Hub) unicast(message *Message) {
+func (h *hubManager) unicast(message *dataMessage) {
 	message.Dest.Send <- message.Content
-	// clog.Debug("Hub", "unicast", "Unicast Message to %s : %s", message.Dest.Name, message.Content)
+	// clog.Debug("hubManager", "unicast", "Unicast dataMessage to %s : %s", message.Dest.Name, message.Content)
 	h.SentMessByTicks++
 }
 
-func (h *Hub) action(message *Message) {
-	// clog.Debug("Hub", "action", "Message %s : %s", message.Dest.Name, message.Content)
+func (h *hubManager) action(message *dataMessage) {
+	// clog.Debug("hubManager", "action", "dataMessage %s : %s", message.Dest.Name, message.Content)
 	go message.Dest.CallToAction(message.Dest, message.Content)
 }
 
-func (h *Hub) Run() {
+func (h *hubManager) run() {
 	// ticker := time.NewTicker(timeStep)
 	// defer func() {
 	// 	ticker.Stop()

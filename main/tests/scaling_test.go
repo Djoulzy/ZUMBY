@@ -11,17 +11,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var tmpHub *hub.Hub
+var tmphubManager *hub.hubManager
 var slist *ServersList
 
-func newClient(name string, userType int) *hub.Client {
-	tmpClient := &hub.Client{
+func newhubClient(name string, userType int) *hub.hubClient {
+	tmphubClient := &hub.hubClient{
 		Quit:  make(chan bool),
 		CType: userType, Send: make(chan []byte, 256),
 		CallToAction: nil, Addr: "10.31.100.200:8081",
 		Name: name, Content_id: 0, Front_id: "", App_id: "", Country: "", User_agent: "Test Socket",
 	}
-	return tmpClient
+	return tmphubClient
 }
 
 func TestAddServer(t *testing.T) {
@@ -36,9 +36,9 @@ func TestAddServer(t *testing.T) {
 }
 
 func TestAddNewConnectedServer(t *testing.T) {
-	regSrv := newClient("test1", hub.ClientUndefined)
-	tmpHub.Register <- regSrv
-	tmpHub.Newrole(&hub.ConnModifier{Client: regSrv, NewName: "test1", NewType: hub.ClientServer})
+	regSrv := newhubClient("test1", hub.clientUndefined)
+	tmphubManager.Register <- regSrv
+	tmphubManager.Newrole(&hub.ConnModifier{hubClient: regSrv, NewName: "test1", NewType: hub.clientServer})
 
 	slist.AddNewConnectedServer(regSrv)
 	assert.Equal(t, "test1", slist.nodes[regSrv.Addr].distantName, "Server should be registered")
@@ -63,11 +63,11 @@ func TestUpdateMetrics(t *testing.T) {
 }
 
 func TestRedirectConnection(t *testing.T) {
-	tmpClient := newClient("Toto", hub.ClientUser)
-	tmpHub.Register <- tmpClient
+	tmphubClient := newhubClient("Toto", hub.clientUser)
+	tmphubManager.Register <- tmphubClient
 
-	slist.RedirectConnection(tmpClient)
-	ret := <-tmpClient.Send
+	slist.RedirectConnection(tmphubClient)
+	ret := <-tmphubClient.Send
 	assert.Equal(t, "[RDCT]10.31.100.200:8080", string(ret), "Bad redirection data")
 }
 
@@ -75,13 +75,13 @@ func TestMain(m *testing.M) {
 	clog.LogLevel = 5
 	clog.StartLogging = true
 
-	tmpHub = hub.NewHub()
-	go tmpHub.Run()
+	tmphubManager = hub.NewhubManager()
+	go tmphubManager.Run()
 
 	tcp_params := &tcpserver.Manager{
 		ServerName:               "Test",
 		Tcpaddr:                  "127.0.0.1:8081",
-		Hub:                      tmpHub,
+		hubManager:               tmphubManager,
 		ConnectTimeOut:           2,
 		WriteTimeOut:             1,
 		ScalingCheckServerPeriod: 5,

@@ -25,7 +25,7 @@ import (
 //		641-768 : Prennable / non bloquant (0x281 - 0x300)
 //
 
-type FILELAYER struct {
+type fileLayer struct {
 	Data    []int  `bson:"data" json:"data"`
 	Name    string `bson:"name" json:"name"`
 	Width   int    `bson:"width" json:"width"`
@@ -39,7 +39,7 @@ type FILELAYER struct {
 	Offsety int    `bson:"offsety" json:"offsety"`
 }
 
-type FILETILESET struct {
+type fileTileSet struct {
 	Columns     int    `bson:"columns" json:"columns"`
 	Firstgid    int    `bson:"firstgid" json:"firstgid"`
 	Image       string `bson:"image" json:"image"`
@@ -53,7 +53,7 @@ type FILETILESET struct {
 	Tilewidth   int    `bson:"tilewidth" json:"tilewidth"`
 }
 
-type FILEMAP struct {
+type fileMap struct {
 	Width        int           `bson:"width" json:"width"`
 	Height       int           `bson:"height" json:"height"`
 	Nextobjectid int           `bson:"nextobjectid" json:"nextobjectid"`
@@ -64,21 +64,21 @@ type FILEMAP struct {
 	Tilewidth    int           `bson:"tilewidth" json:"tilewidth"`
 	Type         string        `bson:"type" json:"type"`
 	Version      int           `bson:"version" json:"version"`
-	Layers       []FILELAYER   `bson:"layers" json:"layers"`
-	Tilesets     []FILETILESET `bson:"tilesets" json:"tilesets"`
+	Layers       []fileLayer   `bson:"layers" json:"layers"`
+	Tilesets     []fileTileSet `bson:"tilesets" json:"tilesets"`
 }
 
-type MapData struct {
+type mapData struct {
 	Width    int
 	Height   int
 	Entities [][]interface{}
 	Over     [][]int
 	Ground   [][]int
 	Items    [][]ITEM
-	FileData FILEMAP
+	FileData fileMap
 }
 
-func (M *MapData) loadTiledJSONMap(file string) {
+func (M *mapData) loadTiledJSONMap(file string) {
 	dat, _ := ioutil.ReadFile(file)
 	err := json.Unmarshal(dat, &M.FileData)
 	if err != nil {
@@ -116,7 +116,7 @@ func (M *MapData) loadTiledJSONMap(file string) {
 	}
 }
 
-func (M *MapData) ExportMapArea(x, y, AOIWidth, AOIHeight int) []byte {
+func (M *mapData) exportMapArea(x, y, AOIWidth, AOIHeight int) []byte {
 	var startx, starty int
 	tmp := M.FileData
 
@@ -136,7 +136,7 @@ func (M *MapData) ExportMapArea(x, y, AOIWidth, AOIHeight int) []byte {
 		tmp.Height = AOIHeight * 3
 	}
 
-	tmp.Layers = make([]FILELAYER, 3)
+	tmp.Layers = make([]fileLayer, 3)
 	tmp.Layers[0].Data = make([]int, tmp.Width*tmp.Height)
 	tmp.Layers[1].Data = make([]int, tmp.Width*tmp.Height)
 	tmp.Layers[2].Data = make([]int, tmp.Width*tmp.Height)
@@ -200,7 +200,7 @@ func (M *MapData) ExportMapArea(x, y, AOIWidth, AOIHeight int) []byte {
 	return json
 }
 
-func (M *MapData) Draw() {
+func (M *mapData) draw() {
 	fmt.Printf("%c[H", 27)
 	visuel := ""
 	display := "*"
@@ -241,7 +241,7 @@ func drawRect(img *image.RGBA, x, y, width, height int, c color.Color) {
 	}
 }
 
-func (M *MapData) genAOIImage(x, y int, W *WORLD) string {
+func (M *mapData) genAOIImage(x, y int, W *WORLD) string {
 	pixel := 11
 	img := image.NewRGBA(image.Rect(0, 0, W.AOIWidth*pixel, W.AOIHeight*pixel))
 
@@ -271,14 +271,14 @@ func (M *MapData) genAOIImage(x, y int, W *WORLD) string {
 	f, _ := os.OpenFile(name, os.O_WRONLY|os.O_CREATE, 0600)
 	defer f.Close()
 	png.Encode(f, img)
-	var area string = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon</title>"
+	var area = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon</title>"
 	area = fmt.Sprintf("%s<meta http-equiv='refresh' content='1' /></head><body>", area)
 	area = fmt.Sprintf("%s\n<img src='/client/assets/%d_%d.png' /></body></html>", area, x, y)
 
 	return area
 }
 
-func (M *MapData) genWorldImage(W *WORLD) {
+func (M *mapData) genWorldImage(W *WORLD) {
 	img := image.NewRGBA(image.Rect(0, 0, M.Width, M.Height))
 
 	for y := 0; y < M.Height; y++ {
@@ -305,8 +305,8 @@ func (M *MapData) genWorldImage(W *WORLD) {
 	png.Encode(f, img)
 }
 
-func (M *MapData) buildMonPage(W *WORLD) {
-	var area string = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon Global</title>"
+func (M *mapData) buildMonPage(W *WORLD) {
+	var area = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon Global</title>"
 	area = fmt.Sprintf("%s<meta http-equiv='refresh' content='1' /></head><body><map name='map'>", area)
 	nby := M.Height / W.AOIHeight
 	nbx := M.Width / W.AOIWidth

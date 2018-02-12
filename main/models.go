@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	Newline = []byte{'\r', '\n'}
-	Space   = []byte{' '}
+	newLine   = []byte{'\r', '\n'}
+	spaceChar = []byte{' '}
 )
 
 type Entity struct {
@@ -43,7 +43,7 @@ type ITEM struct {
 }
 
 type USER struct {
-	hubClient *Client
+	hubhubClient *hubClient
 	Entity
 	Attributes
 	Inventory []ITEM `bson:"i" json:"i"`
@@ -62,13 +62,13 @@ type TILE struct {
 }
 
 type WORLD struct {
-	hub *Hub
+	hub *hubManager
 	// MobList   map[string]*MOB
 	MobList *cmap.CMap
 	// UserList  map[string]*USER
 	UserList  *cmap.CMap
 	TilesList []TILE
-	Map       *MapData
+	Map       *mapData
 	AOIs      *AOIList
 	TimeStep  time.Duration
 	TileSize  int

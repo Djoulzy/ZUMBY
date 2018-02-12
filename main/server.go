@@ -9,13 +9,16 @@ import (
 	"github.com/Djoulzy/Tools/config"
 )
 
-var Cryptor *Cypher
+// Cryptor données de cryptage
+var Cryptor *cypher
+
+// ScaleList Liste des serveur voisins
 var ScaleList *ServersList
 
 // var Storage *storage.Driver
 
 var zeWorld *WORLD
-var zeHub *Hub
+var zehubManager *hubManager
 
 func setMaxProcs(nb int) {
 	var procs int
@@ -72,21 +75,21 @@ func main() {
 		clog.Warn("server", "main", "Setting MaxUser to %d.", conf.MaxUsersConns)
 	}
 
-	Cryptor = &Cypher{
-		HASH_SIZE: conf.HASH_SIZE,
-		HEX_KEY:   []byte(conf.HEX_KEY),
-		HEX_IV:    []byte(conf.HEX_IV),
+	Cryptor = &cypher{
+		HashSize: conf.HashSize,
+		HexKey:   []byte(conf.HexKey),
+		HexIV:    []byte(conf.HexIV),
 	}
 
-	conf_json, _ := json.Marshal(conf)
+	confJSON, _ := json.Marshal(conf)
 
 	///////////////////////////////////////////////////////////////////////////
 
-	zeHub = NewHub()
-	zeWorld = WorldInit(zeHub, conf_json)
-	clog.ServiceCallback = zeWorld.SendServerMassage
+	zehubManager = newhubManager()
+	zeWorld = worldInit(zehubManager, confJSON)
+	clog.ServiceCallback = zeWorld.sendServerMassage
 
-	mon_params := &MonParams{
+	monParams := &MonParams{
 		ServerID:          conf.Name,
 		Httpaddr:          conf.HTTPaddr,
 		Tcpaddr:           conf.TCPaddr,
@@ -95,12 +98,12 @@ func main() {
 		MaxServersConns:   conf.MaxServersConns,
 		MaxIncommingConns: conf.MaxIncommingConns,
 	}
-	go MonStart(zeHub, mon_params)
+	go MonStart(zehubManager, monParams)
 
-	tcp_params := &TCPManager{
+	tcpParams := &tcpManager{
 		ServerName:               conf.Name,
 		Tcpaddr:                  conf.TCPaddr,
-		Hub:                      zeHub,
+		hubManager:               zehubManager,
 		ConnectTimeOut:           conf.ConnectTimeOut,
 		WriteTimeOut:             conf.WriteTimeOut,
 		ScalingCheckServerPeriod: conf.ScalingCheckServerPeriod,
@@ -109,33 +112,33 @@ func main() {
 		Cryptor:                  Cryptor,
 	}
 
-	ScaleList = ScaleInit(tcp_params, &conf.KnownBrothers.Servers)
+	ScaleList = ScaleInit(tcpParams, &conf.KnownBrothers.Servers)
 	go ScaleList.ScaleStart()
 	// go scaling.Start(ScalingServers)
 
-	http_params := &HTTPManager{
-		ServerName:       conf.Name,
-		Httpaddr:         conf.HTTPaddr,
-		Hub:              zeHub,
-		ReadBufferSize:   conf.ReadBufferSize,
-		WriteBufferSize:  conf.WriteBufferSize,
-		HandshakeTimeout: conf.HandshakeTimeout,
-		NBAcceptBySecond: conf.NBAcceptBySecond,
-		CallToAction:     CallToAction,
-		Cryptor:          Cryptor,
-		MapGenCallback:   zeWorld.GetMapArea,
-		ClientDisconnect: zeWorld.DropUser,
-		GetTilesList:     zeWorld.GetTilesList,
-		GetMapImg:        zeWorld.GetMapImg,
-		WorldWidth:       conf.AOIWidth,
-		WorldHeight:      conf.AOIHeight,
+	httpParams := &HTTPManager{
+		ServerName:          conf.Name,
+		Httpaddr:            conf.HTTPaddr,
+		hubManager:          zehubManager,
+		ReadBufferSize:      conf.ReadBufferSize,
+		WriteBufferSize:     conf.WriteBufferSize,
+		HandshakeTimeout:    conf.HandshakeTimeout,
+		NBAcceptBySecond:    conf.NBAcceptBySecond,
+		CallToAction:        CallToAction,
+		Cryptor:             Cryptor,
+		MapGenCallback:      zeWorld.getMapArea,
+		hubClientDisconnect: zeWorld.dropUser,
+		GetTilesList:        zeWorld.getTilesList,
+		GetMapImg:           zeWorld.getMapImg,
+		WorldWidth:          conf.AOIWidth,
+		WorldHeight:         conf.AOIHeight,
 	}
 	clog.Output("HTTP Server starting listening on %s", conf.HTTPaddr)
-	go http_params.Start(http_params)
+	go httpParams.HTTPStart(httpParams)
 
 	clog.Output("TCP Server starting listening on %s", conf.TCPaddr)
-	go tcp_params.Start(tcp_params)
+	go tcpParams.TCPStart(tcpParams)
 
-	go zeWorld.Run()
-	zeHub.Run()
+	go zeWorld.run()
+	zehubManager.run()
 }

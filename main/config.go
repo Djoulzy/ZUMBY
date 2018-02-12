@@ -1,9 +1,11 @@
 package main
 
+// ServerID Nom du server
 type ServerID struct {
 	Name string
 }
 
+// Globals variables systemes
 type Globals struct {
 	LogLevel     int
 	StartLogging bool
@@ -11,6 +13,7 @@ type Globals struct {
 	MaxOpenFiles uint64
 }
 
+// ConnectionLimit Gestion des connections
 type ConnectionLimit struct {
 	MaxUsersConns     int
 	MaxMonitorsConns  int
@@ -18,15 +21,18 @@ type ConnectionLimit struct {
 	MaxIncommingConns int
 }
 
+// ServersAddresses Adresses IP/NS du server
 type ServersAddresses struct {
 	HTTPaddr string
 	TCPaddr  string
 }
 
+// KnownBrothers serveurs voisins
 type KnownBrothers struct {
 	Servers map[string]string
 }
 
+// HTTPServerConfig params HTTP
 type HTTPServerConfig struct {
 	ReadBufferSize   int
 	WriteBufferSize  int
@@ -34,18 +40,21 @@ type HTTPServerConfig struct {
 	HandshakeTimeout int
 }
 
+// TCPServerConfig params TCP
 type TCPServerConfig struct {
 	ConnectTimeOut           int
 	WriteTimeOut             int
 	ScalingCheckServerPeriod int
 }
 
+// Encryption secret keys
 type Encryption struct {
-	HASH_SIZE int
-	HEX_KEY   string
-	HEX_IV    string
+	HashSize int
+	HexKey   string
+	HexIV    string
 }
 
+// World param du monde
 type World struct {
 	TimeStep  int
 	TileSize  int
@@ -55,6 +64,7 @@ type World struct {
 	MaxMobNum int
 }
 
+// AppConfig Structure globale
 type AppConfig struct {
 	ServerID
 	Globals
@@ -67,7 +77,7 @@ type AppConfig struct {
 	World
 }
 
-var conf *AppConfig = &AppConfig{
+var conf = &AppConfig{
 	ServerID{},
 	Globals{
 		LogLevel:     4,
@@ -98,9 +108,9 @@ var conf *AppConfig = &AppConfig{
 		ScalingCheckServerPeriod: 10,
 	},
 	Encryption{
-		HASH_SIZE: 8,
-		HEX_KEY:   "0000000000000000000000000000000000000000000000000000000000000000",
-		HEX_IV:    "00000000000000000000000000000000",
+		HashSize: 8,
+		HexKey:   "0000000000000000000000000000000000000000000000000000000000000000",
+		HexIV:    "00000000000000000000000000000000",
 	},
 	World{
 		TimeStep:  100,

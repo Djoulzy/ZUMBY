@@ -9,6 +9,7 @@ import (
 	"github.com/Djoulzy/Tools/clog"
 )
 
+// AOI Area of Interest
 type AOI struct {
 	X            int
 	Y            int
@@ -20,8 +21,10 @@ type AOI struct {
 	update       []byte
 }
 
+// AOIList List of all Area of Interest
 type AOIList [][]*AOI
 
+// BuildAOIList Decoupe la carte en AOI
 func BuildAOIList(W *WORLD) *AOIList {
 	width := W.Map.Width / W.AOIWidth
 	height := W.Map.Height / W.AOIHeight
@@ -177,9 +180,8 @@ func (L *AOIList) getUpdateForPlayer(x, y int) ([]byte, error) {
 	aoi := L.getAOIfromCoord(x, y)
 	if len(aoi.update) > 0 {
 		return aoi.update, nil
-	} else {
-		return aoi.update, errors.New("No update")
 	}
+	return aoi.update, errors.New("No update")
 }
 
 func (L *AOIList) getAOIEntities(x, y int) []byte {

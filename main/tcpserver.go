@@ -12,19 +12,19 @@ import (
 	"github.com/Djoulzy/Tools/clog"
 )
 
-type TCPManager struct {
+type tcpManager struct {
 	Tcpaddr                  string
 	ServerName               string
-	Hub                      *Hub
+	hubManager               *hubManager
 	MaxServersConns          int
 	ConnectTimeOut           int
 	WriteTimeOut             int
 	ScalingCheckServerPeriod int
-	CallToAction             func(*Client, []byte)
-	Cryptor                  *Cypher
+	CallToAction             func(*hubClient, []byte)
+	Cryptor                  *cypher
 }
 
-func (m *TCPManager) reader(conn *net.TCPConn, cli *Client) {
+func (m *tcpManager) reader(conn *net.TCPConn, cli *hubClient) {
 	defer func() {
 		conn.Close()
 	}()
@@ -37,7 +37,7 @@ func (m *TCPManager) reader(conn *net.TCPConn, cli *Client) {
 			clog.Trace("TCPserver", "reader", "closing conn %s", err)
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, Newline, Space, -1))
+		message = bytes.TrimSpace(bytes.Replace(message, newLine, spaceChar, -1))
 		// clog.Trace("TCPserver", "reader", "Reading %s", message)
 		// long, err := conn.Read(message)
 		// if err != nil {
@@ -49,7 +49,7 @@ func (m *TCPManager) reader(conn *net.TCPConn, cli *Client) {
 	}
 }
 
-func (m *TCPManager) writer(conn *net.TCPConn, cli *Client) {
+func (m *tcpManager) writer(conn *net.TCPConn, cli *hubClient) {
 	defer func() {
 		conn.Close()
 	}()
@@ -71,19 +71,19 @@ func (m *TCPManager) writer(conn *net.TCPConn, cli *Client) {
 
 				return
 			}
-			message = append(message, Newline...)
+			message = append(message, newLine...)
 			conn.Write(message)
 		}
 	}
 }
 
-// func GetAddr(c *hub.Client) string {
+// func GetAddr(c *hub.hubClient) string {
 // 	addr := c.Conn.(*net.TCPConn).RemoteAddr().String()
 // 	ip := strings.Split(string(addr), "|")
 // 	return ip[0]
 // }
 
-func (m *TCPManager) Connect(addr string) (*net.TCPConn, error) {
+func (m *tcpManager) Connect(addr string) (*net.TCPConn, error) {
 	conn, err := net.DialTimeout("tcp", addr, time.Second*time.Duration(m.ConnectTimeOut))
 	// addr, _ := net.ResolveTCPAddr("tcp", m.Tcpaddr)
 	// conn, err := net.DialTCP("tcp", nil, addr)
@@ -94,43 +94,44 @@ func (m *TCPManager) Connect(addr string) (*net.TCPConn, error) {
 	return conn.(*net.TCPConn), err
 }
 
-func (m *TCPManager) newClient(addr string, name string) *Client {
-	client := &Client{Quit: make(chan bool),
-		CType: ClientUndefined, Send: make(chan []byte, 256), CallToAction: m.CallToAction, Addr: addr,
-		Name: name, Content_id: 0, Front_id: "", App_id: "", Country: "", User_agent: "TCP Socket"}
-	m.Hub.Register <- client
+func (m *tcpManager) newhubClient(addr string, name string) *hubClient {
+	client := &hubClient{Quit: make(chan bool),
+		CType: clientUndefined, Send: make(chan []byte, 256), CallToAction: m.CallToAction, Addr: addr,
+		Name: name, AppID: "", Country: "", UserAgent: "TCP Socket"}
+	m.hubManager.Register <- client
 	// <-client.Consistent
 	return client
 }
 
-func (m *TCPManager) NewOutgoingConn(conn *net.TCPConn, toName string, wg *sync.WaitGroup) {
+func (m *tcpManager) NewOutgoingConn(conn *net.TCPConn, toName string, wg *sync.WaitGroup) {
 	clog.Debug("TCPserver", "NewOutgoingConn", "Contacting %s", conn.RemoteAddr().String())
-	client := m.newClient(conn.RemoteAddr().String(), toName)
-	handShake, _ := m.Cryptor.Encrypt_b64(fmt.Sprintf("%s|%s|SERV", m.ServerName, m.Tcpaddr))
-	mess := NewMessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
-	m.Hub.Unicast <- mess
+	client := m.newhubClient(conn.RemoteAddr().String(), toName)
+	handShake, _ := m.Cryptor.encryptB64(fmt.Sprintf("%s|%s|SERV", m.ServerName, m.Tcpaddr))
+	mess := newDatamessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
+	m.hubManager.Unicast <- mess
 
 	go m.writer(conn, client)
 	(*wg).Done()
 	m.reader(conn, client)
-	m.Hub.Unregister <- client
+	m.hubManager.Unregister <- client
 	// <-client.Consistent
 }
 
-func (m *TCPManager) NewIncommingConn(conn *net.TCPConn, wg *sync.WaitGroup) {
-	client := m.newClient(conn.RemoteAddr().String(), conn.RemoteAddr().String())
-	handShake, _ := m.Cryptor.Encrypt_b64(fmt.Sprintf("%s|%s|SERV", m.ServerName, m.Tcpaddr))
-	mess := NewMessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
-	m.Hub.Unicast <- mess
+func (m *tcpManager) NewIncommingConn(conn *net.TCPConn, wg *sync.WaitGroup) {
+	client := m.newhubClient(conn.RemoteAddr().String(), conn.RemoteAddr().String())
+	handShake, _ := m.Cryptor.encryptB64(fmt.Sprintf("%s|%s|SERV", m.ServerName, m.Tcpaddr))
+	mess := newDatamessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
+	m.hubManager.Unicast <- mess
 
 	go m.writer(conn, client)
 	(*wg).Done()
 	m.reader(conn, client)
-	m.Hub.Unregister <- client
+	m.hubManager.Unregister <- client
 	// <-client.Consistent
 }
 
-func (m *TCPManager) Start(conf *TCPManager) {
+// TCPStart lance le server TCP
+func (m *tcpManager) TCPStart(conf *tcpManager) {
 	var wg sync.WaitGroup
 
 	m = conf

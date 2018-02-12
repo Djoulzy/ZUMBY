@@ -15,32 +15,32 @@ import (
 	"github.com/Djoulzy/Tools/clog"
 )
 
-type Cypher struct {
-	HASH_SIZE int // Should be 8
-	HEX_KEY   []byte
-	HEX_IV    []byte
+type cypher struct {
+	HashSize int // Should be 8
+	HexKey   []byte
+	HexIV    []byte
 }
 
-func (uc *Cypher) GenIV_bin() []byte {
-	iv_bin := make([]byte, 16)
+func (uc *cypher) genIVBin() []byte {
+	ivBin := make([]byte, 16)
 
 	newRand := rand.New(rand.NewSource(int64(time.Now().Nanosecond())))
 	for i := 0; i < 16; i++ {
-		iv_bin[i] = byte(newRand.Intn(256))
+		ivBin[i] = byte(newRand.Intn(256))
 	}
 
-	return iv_bin
+	return ivBin
 }
 
-func (uc *Cypher) GenIV_hex() []byte {
-	bin := uc.GenIV_bin()
+func (uc *cypher) genIVHex() []byte {
+	bin := uc.genIVBin()
 
 	dst := make([]byte, hex.EncodedLen(len(bin)))
 	hex.Encode(dst, bin)
 	return dst
 }
 
-func (*Cypher) pkcs7pad(data []byte, blockSize int) []byte {
+func (*cypher) pkcs7pad(data []byte, blockSize int) []byte {
 
 	var paddingCount int
 
@@ -52,7 +52,7 @@ func (*Cypher) pkcs7pad(data []byte, blockSize int) []byte {
 }
 
 // RemovePkcs7 removes pkcs7 padding from previously padded byte array
-func (uc *Cypher) pkcs7unpad(padded []byte, blockSize int) []byte {
+func (uc *cypher) pkcs7unpad(padded []byte, blockSize int) []byte {
 
 	dataLen := len(padded)
 	paddingCount := int(padded[dataLen-1])
@@ -72,11 +72,11 @@ func (uc *Cypher) pkcs7unpad(padded []byte, blockSize int) []byte {
 	return padded[:len(padded)-paddingCount] //return data - padding
 }
 
-func (uc *Cypher) encodeBase64(b []byte) []byte {
+func (uc *cypher) encodeBase64(b []byte) []byte {
 	return []byte(base64.StdEncoding.EncodeToString(b))
 }
 
-func (uc *Cypher) decodeBase64(s string) []byte {
+func (uc *cypher) decodeBase64(s string) []byte {
 	data, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		clog.Fatal("Crypt", "decodeBase64", err)
@@ -84,7 +84,7 @@ func (uc *Cypher) decodeBase64(s string) []byte {
 	return data
 }
 
-func (uc *Cypher) GetMD5Hash(text string) []byte {
+func (uc *cypher) getMD5Hash(text string) []byte {
 	hasher := md5.New()
 	hasher.Write([]byte(text))
 	md5 := hasher.Sum(nil)
@@ -92,78 +92,78 @@ func (uc *Cypher) GetMD5Hash(text string) []byte {
 	return md5
 }
 
-func (uc *Cypher) Encrypt_b64(text string) ([]byte, error) {
-	var iv_bin []byte
+func (uc *cypher) encryptB64(text string) ([]byte, error) {
+	var ivBin []byte
 
-	key_bin := make([]byte, hex.DecodedLen(len(uc.HEX_KEY)))
-	hex.Decode(key_bin, uc.HEX_KEY)
+	keyBin := make([]byte, hex.DecodedLen(len(uc.HexKey)))
+	hex.Decode(keyBin, uc.HexKey)
 
-	if len(uc.HEX_IV) == 0 {
-		iv_bin = uc.GenIV_bin()
+	if len(uc.HexIV) == 0 {
+		ivBin = uc.genIVBin()
 	} else {
-		iv_bin = make([]byte, hex.DecodedLen(len(uc.HEX_IV)))
-		hex.Decode(iv_bin, uc.HEX_IV)
+		ivBin = make([]byte, hex.DecodedLen(len(uc.HexIV)))
+		hex.Decode(ivBin, uc.HexIV)
 	}
 
-	block, err := aes.NewCipher(key_bin)
+	block, err := aes.NewCipher(keyBin)
 	if err != nil {
 		return nil, err
 	}
 
-	textHash := (uc.GetMD5Hash(text))[0:8]
+	textHash := (uc.getMD5Hash(text))[0:8]
 
 	signedText := append(textHash, []byte(text)...)
-	text_padded := uc.pkcs7pad(signedText, aes.BlockSize)
+	textPadded := uc.pkcs7pad(signedText, aes.BlockSize)
 
-	cbc := cipher.NewCBCEncrypter(block, iv_bin)
-	cbc.CryptBlocks(text_padded, text_padded)
+	cbc := cipher.NewCBCEncrypter(block, ivBin)
+	cbc.CryptBlocks(textPadded, textPadded)
 
-	iv_b64 := bytes.TrimRight(bytes.Replace(bytes.Replace(uc.encodeBase64(iv_bin), []byte{'/'}, []byte{'_'}, -1), []byte{'+'}, []byte{'-'}, -1), "=")
-	text_b64 := bytes.TrimRight(bytes.Replace(bytes.Replace(uc.encodeBase64(text_padded), []byte{'/'}, []byte{'_'}, -1), []byte{'+'}, []byte{'-'}, -1), "=")
+	ivB64 := bytes.TrimRight(bytes.Replace(bytes.Replace(uc.encodeBase64(ivBin), []byte{'/'}, []byte{'_'}, -1), []byte{'+'}, []byte{'-'}, -1), "=")
+	textB64 := bytes.TrimRight(bytes.Replace(bytes.Replace(uc.encodeBase64(textPadded), []byte{'/'}, []byte{'_'}, -1), []byte{'+'}, []byte{'-'}, -1), "=")
 
-	return append(append(iv_b64, '/'), text_b64...), nil
+	return append(append(ivB64, '/'), textB64...), nil
 }
 
-func (uc *Cypher) Decrypt_b64(enc_text string) ([]byte, error) {
-	encoded_str := strings.Split(enc_text, "/")
-	if len(encoded_str) < 2 {
+func (uc *cypher) decryptB64(encText string) ([]byte, error) {
+	encodedStr := strings.Split(encText, "/")
+	if len(encodedStr) < 2 {
 		return nil, errors.New("Bad string scheme")
 	}
 
 	padder := "===="
-	iv_pad := ""
-	if len(encoded_str[0])%4 > 0 {
-		iv_pad = padder[len(encoded_str[0])%4:]
+	ivPad := ""
+	if len(encodedStr[0])%4 > 0 {
+		ivPad = padder[len(encodedStr[0])%4:]
 	}
-	text_pad := ""
-	if len(encoded_str[1])%4 > 0 {
-		text_pad = padder[len(encoded_str[1])%4:]
+	textPad := ""
+	if len(encodedStr[1])%4 > 0 {
+		textPad = padder[len(encodedStr[1])%4:]
 	}
 
-	iv_b64 := strings.Replace(strings.Replace(encoded_str[0], "_", "/", -1), "-", "+", -1) + iv_pad
-	text_b64 := strings.Replace(strings.Replace(encoded_str[1], "_", "/", -1), "-", "+", -1) + text_pad
+	ivB64 := strings.Replace(strings.Replace(encodedStr[0], "_", "/", -1), "-", "+", -1) + ivPad
+	textB64 := strings.Replace(strings.Replace(encodedStr[1], "_", "/", -1), "-", "+", -1) + textPad
 
-	clog.Info("Crypt", "Decrypt_b64", "IV_B64: %s -- TXT_B64: %s", iv_b64, text_b64)
+	clog.Info("Crypt", "Decrypt_b64", "IV_B64: %s -- TXT_B64: %s", ivB64, textB64)
 
-	key_bin := make([]byte, hex.DecodedLen(len(uc.HEX_KEY)))
-	hex.Decode(key_bin, uc.HEX_KEY)
-	iv_bin := uc.decodeBase64(iv_b64)
-	text_bin := uc.decodeBase64(text_b64)
-	block, err := aes.NewCipher(key_bin)
+	keyBin := make([]byte, hex.DecodedLen(len(uc.HexKey)))
+	hex.Decode(keyBin, uc.HexKey)
+	ivBin := uc.decodeBase64(ivB64)
+	textBin := uc.decodeBase64(textB64)
+	block, err := aes.NewCipher(keyBin)
 	if err != nil {
 		return nil, err
 	}
 
 	// iv_bin = iv_bin[:aes.BlockSize]
-	// text_bin = text_bin[aes.BlockSize:]
-	if len(text_bin)%aes.BlockSize != 0 {
+	// textBin = textBin[aes.BlockSize:]
+	if len(textBin)%aes.BlockSize != 0 {
 		panic("ciphertext is not a multiple of the block size")
 	}
 
-	cbc := cipher.NewCBCDecrypter(block, iv_bin)
-	cbc.CryptBlocks(text_bin, text_bin)
-	text_unpadded := uc.pkcs7unpad(text_bin, aes.BlockSize)
-	text_unpadded = text_unpadded[uc.HASH_SIZE:]
+	cbc := cipher.NewCBCDecrypter(block, ivBin)
+	cbc.CryptBlocks(textBin, textBin)
+	textUnpadded := uc.pkcs7unpad(textBin, aes.BlockSize)
+	textUnpadded = textUnpadded[uc.HashSize:]
 
-	return text_unpadded, nil
+	return textUnpadded, nil
 }

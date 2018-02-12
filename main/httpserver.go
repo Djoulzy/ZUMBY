@@ -16,44 +16,45 @@ import (
 )
 
 const (
-	writeWait      = 5 * time.Second
-	pongWait       = 60 * time.Second
-	pingPeriod     = (pongWait * 9) / 10
-	maxMessageSize = 512
+	writeWait          = 5 * time.Second
+	pongWait           = 60 * time.Second
+	pingPeriod         = (pongWait * 9) / 10
+	maxdataMessageSize = 512
 )
 
-var Upgrader *websocket.Upgrader
+var upgrader *websocket.Upgrader
 
+// HTTPManager gestionnaire de connection HTTP
 type HTTPManager struct {
-	Httpaddr         string
-	ServerName       string
-	Hub              *Hub
-	ReadBufferSize   int
-	WriteBufferSize  int
-	NBAcceptBySecond int
-	HandshakeTimeout int
-	CallToAction     func(*Client, []byte)
-	Cryptor          *Cypher
-	MapGenCallback   func(x, y int) []byte
-	GetTilesList     func() []byte
-	GetMapImg        func(x, y int) string
-	ClientDisconnect func(string)
-	WorldWidth       int
-	WorldHeight      int
+	Httpaddr            string
+	ServerName          string
+	hubManager          *hubManager
+	ReadBufferSize      int
+	WriteBufferSize     int
+	NBAcceptBySecond    int
+	HandshakeTimeout    int
+	CallToAction        func(*hubClient, []byte)
+	Cryptor             *cypher
+	MapGenCallback      func(x, y int) []byte
+	GetTilesList        func() []byte
+	GetMapImg           func(x, y int) string
+	hubClientDisconnect func(string)
+	WorldWidth          int
+	WorldHeight         int
 }
 
 func (m *HTTPManager) statusPage(w http.ResponseWriter, r *http.Request) {
-	handShake, _ := m.Cryptor.Encrypt_b64("MNTR|Monitoring|MNTR")
+	handShake, _ := m.Cryptor.encryptB64("MNTR|Monitoring|MNTR")
 	var data = struct {
 		Host   string
 		Nb     int
-		Users  map[string]*Client
+		Users  map[string]*hubClient
 		Stats  string
 		HShake string
 	}{
 		m.Httpaddr,
-		len(m.Hub.Users),
-		m.Hub.Users,
+		len(m.hubManager.Users),
+		m.hubManager.Users,
 		MachineLoad.String(),
 		string(handShake),
 	}
@@ -69,7 +70,7 @@ func (m *HTTPManager) statusPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *HTTPManager) testPage(w http.ResponseWriter, r *http.Request) {
-	handShake, _ := m.Cryptor.Encrypt_b64("LOAD_1|TestPage|USER")
+	handShake, _ := m.Cryptor.encryptB64("LOAD_1|TestPage|USER")
 
 	var data = struct {
 		Host   string
@@ -87,7 +88,7 @@ func (m *HTTPManager) testPage(w http.ResponseWriter, r *http.Request) {
 	homeTempl.Execute(w, &data)
 }
 
-func (m *HTTPManager) Connect() *websocket.Conn {
+func (m *HTTPManager) connect() *websocket.Conn {
 	u := url.URL{Scheme: "ws", Host: m.Httpaddr, Path: "/ws"}
 	clog.Info("HTTPServer", "Connect", "Connecting to %s", u.String())
 
@@ -100,13 +101,13 @@ func (m *HTTPManager) Connect() *websocket.Conn {
 	return conn
 }
 
-func (m *HTTPManager) Reader(conn *websocket.Conn, cli *Client) {
+func (m *HTTPManager) reader(conn *websocket.Conn, cli *hubClient) {
 	defer func() {
-		m.ClientDisconnect(cli.Name)
-		m.Hub.Unregister <- cli
+		m.hubClientDisconnect(cli.Name)
+		m.hubManager.Unregister <- cli
 		conn.Close()
 	}()
-	conn.SetReadLimit(maxMessageSize)
+	conn.SetReadLimit(maxdataMessageSize)
 	conn.SetReadDeadline(time.Now().Add(pongWait))
 	conn.SetPongHandler(func(string) error {
 		conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -121,7 +122,7 @@ func (m *HTTPManager) Reader(conn *websocket.Conn, cli *Client) {
 			}
 			return
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, Newline, Space, -1))
+		message = bytes.TrimSpace(bytes.Replace(message, newLine, spaceChar, -1))
 		go m.CallToAction(cli, message)
 	}
 }
@@ -131,7 +132,7 @@ func (m *HTTPManager) _write(ws *websocket.Conn, mt int, message []byte) error {
 	return ws.WriteMessage(mt, message)
 }
 
-func (m *HTTPManager) Writer(conn *websocket.Conn, cli *Client) {
+func (m *HTTPManager) writer(conn *websocket.Conn, cli *hubClient) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -145,7 +146,7 @@ func (m *HTTPManager) Writer(conn *websocket.Conn, cli *Client) {
 				clog.Warn("HTTPServer", "Writer", "Error: %s", ok)
 				cm := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "Something went wrong !")
 				if err := m._write(conn, websocket.CloseMessage, cm); err != nil {
-					clog.Error("HTTPServer", "Writer", "Connection lost ! Cannot send CloseMessage to %s", cli.Name)
+					clog.Error("HTTPServer", "Writer", "Connection lost ! Cannot send ClosedataMessage to %s", cli.Name)
 				}
 				return
 			}
@@ -154,14 +155,14 @@ func (m *HTTPManager) Writer(conn *websocket.Conn, cli *Client) {
 				return
 			}
 		case <-ticker.C:
-			clog.Debug("HTTPServer", "Writer", "Client %s Ping!", cli.Name)
+			clog.Debug("HTTPServer", "Writer", "hubClient %s Ping!", cli.Name)
 			if err := m._write(conn, websocket.PingMessage, []byte{}); err != nil {
 				return
 			}
 		case <-cli.Quit:
 			cm := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "An other device is using your account !")
 			if err := m._write(conn, websocket.CloseMessage, cm); err != nil {
-				clog.Error("HTTPServer", "Writer", "Cannot write CloseMessage to %s", cli.Name)
+				clog.Error("HTTPServer", "Writer", "Cannot write ClosedataMessage to %s", cli.Name)
 			}
 			return
 		}
@@ -178,29 +179,29 @@ func (m *HTTPManager) wsConnect(w http.ResponseWriter, r *http.Request) {
 		ua = "n/a"
 	}
 
-	if m.Hub.UserExists(name, ClientUser) {
-		clog.Warn("HTTPServer", "wsConnect", "Client %s already exists ... Refusing connection", name)
+	if m.hubManager.userExists(name, clientUser) {
+		clog.Warn("HTTPServer", "wsConnect", "hubClient %s already exists ... Refusing connection", name)
 		return
 	}
 
-	httpconn, err := Upgrader.Upgrade(w, r, nil)
+	httpconn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		clog.Error("HTTPServer", "wsConnect", "%s", err)
 		httpconn.Close()
 		return
 	}
 
-	client := &Client{Quit: make(chan bool),
-		CType: ClientUndefined, Send: make(chan []byte, 256), Enqueue: make(chan []byte, 256),
+	client := &hubClient{Quit: make(chan bool),
+		CType: clientUndefined, Send: make(chan []byte, 256), Enqueue: make(chan []byte, 256),
 		CallToAction: m.CallToAction, Addr: httpconn.RemoteAddr().String(),
-		Name: name, Content_id: 0, Front_id: "", App_id: "", Country: "", User_agent: ua}
+		Name: name, AppID: "", Country: "", UserAgent: ua}
 
-	m.Hub.Register <- client
-	go m.Writer(httpconn, client)
-	go m.Reader(httpconn, client)
+	m.hubManager.Register <- client
+	go m.writer(httpconn, client)
+	go m.reader(httpconn, client)
 }
 
-func throttleClients(h http.Handler, n int) http.Handler {
+func throttlehubClients(h http.Handler, n int) http.Handler {
 	ticker := time.NewTicker(time.Second / time.Duration(n))
 	// sema := make(chan struct{}, n)
 
@@ -273,7 +274,8 @@ func (m *HTTPManager) getMonPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (m *HTTPManager) Start(conf *HTTPManager) {
+// HTTPStart lance le serveur HTTP
+func (m *HTTPManager) HTTPStart(conf *HTTPManager) {
 	m = conf
 
 	// myHttp := &http.Server{
@@ -283,7 +285,7 @@ func (m *HTTPManager) Start(conf *HTTPManager) {
 	// 	MaxHeaderBytes: 1 << 20,
 	// }
 
-	Upgrader = &websocket.Upgrader{
+	upgrader = &websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
@@ -306,7 +308,7 @@ func (m *HTTPManager) Start(conf *HTTPManager) {
 	http.HandleFunc("/mon/", m.getMonPage)
 
 	handler := http.HandlerFunc(m.wsConnect)
-	http.Handle("/ws", throttleClients(handler, m.NBAcceptBySecond))
+	http.Handle("/ws", throttlehubClients(handler, m.NBAcceptBySecond))
 
 	clog.Fatal("httpserver", "Start", http.ListenAndServe(m.Httpaddr, nil))
 }
