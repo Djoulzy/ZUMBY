@@ -19,7 +19,7 @@ import (
 	"github.com/nu7hatch/gouuid"
 )
 
-func (W *WORLD) findSpawnPlace() (int, int) {
+func (W *world) findSpawnPlace() (int, int) {
 	for {
 		x := rand.Intn(W.Map.Width)
 		y := rand.Intn(W.Map.Height)
@@ -31,13 +31,13 @@ func (W *WORLD) findSpawnPlace() (int, int) {
 	}
 }
 
-func (W *WORLD) spawnMob() {
+func (W *world) spawnMob() {
 	if W.MobList.Length() < W.MaxMobNum {
 		rand.Seed(time.Now().UnixNano())
 		face := fmt.Sprintf("%d", rand.Intn(8))
 		uid, _ := uuid.NewV4()
-		mob := &MOB{
-			Entity{
+		mob := &mob{
+			entity{
 				ID:        uid.String(),
 				Type:      "M",
 				Face:      face,
@@ -50,17 +50,17 @@ func (W *WORLD) spawnMob() {
 		W.Map.Entities[mob.X][mob.Y] = mob
 		W.MobList.Set(mob.ID, mob)
 		W.AOIs.addEntity(mob.X, mob.Y, mob)
-		clog.Info("WORLD", "spawnMob", "Spawning new mob %s", mob.ID)
+		clog.Info("world", "spawnMob", "Spawning new mob %s", mob.ID)
 		// mess := hub.NewdataMessage(nil, hub.clientUser, nil, message)
 		// W.hub.Broadcast <- mess
 	}
 }
 
-func (W *WORLD) findCloserUser(mob *MOB) (*USER, error) {
+func (W *world) findCloserUser(mob *mob) (*user, error) {
 	var distFound float64
-	var userFound *USER
+	var userFound *user
 	for item := range W.UserList.Iter() {
-		player := item.Value.(*USER)
+		player := item.Value.(*user)
 		largeur := math.Abs(float64(mob.X - player.X))
 		hauteur := math.Abs(float64(mob.Y - player.Y))
 		dist := math.Sqrt(math.Pow(largeur, 2) + math.Pow(hauteur, 2))
@@ -81,14 +81,14 @@ func (W *WORLD) findCloserUser(mob *MOB) (*USER, error) {
 	return nil, errors.New("No prey")
 }
 
-// func (W *WORLD) sendMobPos(mob *MOB) {
+// func (W *world) sendMobPos(mob *mob) {
 // 	json, _ := json.Marshal(mob)
 // 	message := []byte(fmt.Sprintf("[BCST]%s", json))
 // 	W.AOIs.addEvent(mob.X, mob.Y, message)
 // 	mob.waitState = mob.Speed
 // }
 
-func (W *WORLD) tileIsFree(x, y int) bool {
+func (W *world) tileIsFree(x, y int) bool {
 	b := W.TilesList[W.Map.Ground[x][y]]
 	i := W.TilesList[W.Map.Items[x][y].ID]
 	f := W.TilesList[W.Map.Over[x][y]]
@@ -99,7 +99,7 @@ func (W *WORLD) tileIsFree(x, y int) bool {
 	return false
 }
 
-func (W *WORLD) moveSIMPLE(mob *MOB, prey *USER) {
+func (W *world) moveSIMPLE(mob *mob, prey *user) {
 	// clog.Info("World", "moveMob", "Seeking for %s", prey.ID)
 	// if math.Abs(float64(prey.X-mob.X)) < math.Abs(float64(prey.Y-mob.Y)) {
 	if mob.Y > prey.Y && W.tileIsFree(mob.X, mob.Y-1) {
@@ -136,7 +136,7 @@ func (W *WORLD) moveSIMPLE(mob *MOB, prey *USER) {
 	}
 }
 
-// func (W *WORLD) moveASTAR(mob *MOB, prey *USER) {
+// func (W *world) moveASTAR(mob *mob, prey *user) {
 // 	node := W.getShortPath(mob, prey)
 // 	if node != nil {
 // 		clog.Info("World", "moveMob", "Seeking for %s", prey.ID)
@@ -155,7 +155,7 @@ func (W *WORLD) moveSIMPLE(mob *MOB, prey *USER) {
 // 	}
 // }
 
-func (W *WORLD) moveMob(mob *MOB) {
+func (W *world) moveMob(mob *mob) {
 	prey, err := W.findCloserUser(mob)
 	if err == nil {
 		// W.moveASTAR(mob, prey)
@@ -163,9 +163,9 @@ func (W *WORLD) moveMob(mob *MOB) {
 	}
 }
 
-func (W *WORLD) browseMob() {
+func (W *world) browseMob() {
 	for item := range W.MobList.Iter() {
-		mob := item.Value.(*MOB)
+		mob := item.Value.(*mob)
 		if mob.waitState <= 0 {
 			W.moveMob(mob)
 		} else {
@@ -175,10 +175,10 @@ func (W *WORLD) browseMob() {
 }
 
 // DropUser supprime un utilisateur de l'AOI
-func (W *WORLD) dropUser(id string) {
+func (W *world) dropUser(id string) {
 	item, _ := W.UserList.Get(id)
 	if item != nil {
-		user := item.(*USER)
+		user := item.(*user)
 		dat, _ := json.Marshal(user)
 		SaveUser(id, dat)
 		W.AOIs.dropEntity(user.X, user.Y, user)
@@ -190,18 +190,18 @@ func (W *WORLD) dropUser(id string) {
 }
 
 // LogUser enregistre un joueur dans l'AOI
-func (W *WORLD) logUser(c *hubClient) ([]byte, error) {
-	var infos *USER
+func (W *world) logUser(c *hubClient) ([]byte, error) {
+	var infos *user
 	dat, err := LoadUser(c.Name)
 	if err != nil {
-		infos = &USER{
-			Entity: Entity{
+		infos = &user{
+			entity: entity{
 				ID: c.Name, Type: "P", Face: "h1", Dir: "down",
 			},
-			Attributes: Attributes{
+			attributes: attributes{
 				PV: 15, Starv: 15, Thirst: 15,
 			},
-			Inventory: make([]ITEM, 10),
+			Inventory: make([]item, 10),
 		}
 		infos.X, infos.Y = W.findSpawnPlace()
 		dat, err = json.Marshal(infos)
@@ -220,7 +220,7 @@ func (W *WORLD) logUser(c *hubClient) ([]byte, error) {
 		clog.Info("World", "logUser", "Registering user %s", infos.ID)
 	}
 
-	infos.hubhubClient = c
+	infos.hubClient = c
 
 	message := W.AOIs.getAOIEntities(infos.X, infos.Y)
 	mess := newDatamessage(nil, clientUser, c, message)
@@ -233,34 +233,34 @@ func (W *WORLD) logUser(c *hubClient) ([]byte, error) {
 	return dat, nil
 }
 
-func (W *WORLD) checkTargetHit(infos *USER) {
-	var mobFound *MOB
+func (W *world) checkTargetHit(infos *user) {
+	var mobFound *mob
 	switch infos.Dir {
 	case "up":
 		for y := infos.Y - 1; y > infos.Y-infos.Pow; y-- {
 			if W.Map.Entities[infos.X][y] != nil {
-				mobFound = W.Map.Entities[infos.X][y].(*MOB)
+				mobFound = W.Map.Entities[infos.X][y].(*mob)
 				break
 			}
 		}
 	case "down":
 		for y := infos.Y + 1; y < infos.Y+infos.Pow; y++ {
 			if W.Map.Entities[infos.X][y] != nil {
-				mobFound = W.Map.Entities[infos.X][y].(*MOB)
+				mobFound = W.Map.Entities[infos.X][y].(*mob)
 				break
 			}
 		}
 	case "left":
 		for x := infos.X - 1; x > infos.X-infos.Pow; x-- {
 			if W.Map.Entities[x][infos.Y] != nil {
-				mobFound = W.Map.Entities[x][infos.Y].(*MOB)
+				mobFound = W.Map.Entities[x][infos.Y].(*mob)
 				break
 			}
 		}
 	case "right":
 		for x := infos.X + 1; x < infos.X+infos.Pow; x++ {
 			if W.Map.Entities[x][infos.Y] != nil {
-				mobFound = W.Map.Entities[x][infos.Y].(*MOB)
+				mobFound = W.Map.Entities[x][infos.Y].(*mob)
 				break
 			}
 		}
@@ -273,10 +273,10 @@ func (W *WORLD) checkTargetHit(infos *USER) {
 }
 
 // CallToAction action du joueur
-func (W *WORLD) callToAction(c *hubClient, cmd string, message []byte) {
+func (W *world) callToAction(c *hubClient, cmd string, message []byte) {
 	switch cmd {
 	case "[FIRE]":
-		var infos USER
+		var infos user
 		err := json.Unmarshal(message, &infos)
 		if err == nil {
 			W.checkTargetHit(&infos)
@@ -284,11 +284,11 @@ func (W *WORLD) callToAction(c *hubClient, cmd string, message []byte) {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
 	case "[PMOV]":
-		var infos USER
+		var infos user
 		err := json.Unmarshal(message, &infos)
 		if err == nil {
 			item, _ := W.UserList.Get(infos.ID)
-			user := item.(*USER)
+			user := item.(*user)
 			if W.tileIsFree(infos.X, infos.Y) {
 				W.Map.Entities[user.X][user.Y] = nil
 				user.X = infos.X
@@ -298,14 +298,14 @@ func (W *WORLD) callToAction(c *hubClient, cmd string, message []byte) {
 				W.AOIs.addEvent(infos.X, infos.Y, mess)
 			} else {
 				tmp := []byte(fmt.Sprintf("[GOXY]{\"id\":\"%s\",\"x\":%d,\"y\":%d}", user.ID, user.X, user.Y))
-				mess := newDatamessage(nil, clientUser, user.hubhubClient, tmp)
+				mess := newDatamessage(nil, clientUser, user.hubClient, tmp)
 				W.hub.Unicast <- mess
 			}
 		} else {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
 	case "[PICK]":
-		var infos INVENTORY
+		var infos inventory
 		err := json.Unmarshal(message, &infos)
 		if err == nil {
 			if (W.Map.Items[infos.X][infos.Y].ID != 0) && (W.Map.Items[infos.X][infos.Y].ID == infos.ID) {
@@ -313,13 +313,13 @@ func (W *WORLD) callToAction(c *hubClient, cmd string, message []byte) {
 				W.inventoryAdd(infos)
 				mess := []byte(fmt.Sprintf("[HIDE]%s", message))
 				W.AOIs.addEvent(infos.X, infos.Y, mess)
-				W.Map.Items[infos.X][infos.Y] = ITEM{}
+				W.Map.Items[infos.X][infos.Y] = item{}
 			}
 		} else {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
 	case "[DROP]":
-		var infos INVENTORY
+		var infos inventory
 		err := json.Unmarshal(message, &infos)
 		if err == nil {
 			W.inventoryDrop(infos)
@@ -330,7 +330,7 @@ func (W *WORLD) callToAction(c *hubClient, cmd string, message []byte) {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
 	case "[UPDI]":
-		var infos INVENTORY
+		var infos inventory
 		err := json.Unmarshal(message, &infos)
 		if err == nil {
 			W.inventoryUpdate(infos)
@@ -338,13 +338,13 @@ func (W *WORLD) callToAction(c *hubClient, cmd string, message []byte) {
 			clog.Warn("World", "CallToAction", "%s:%s:%s", cmd, message, err)
 		}
 	case "[CHAT]":
-		var infos CHATMSG
+		var infos chatmsg
 		err := json.Unmarshal(message, &infos)
 		if err == nil {
 			item, _ := W.UserList.Get(infos.From)
-			user := item.(*USER)
+			user := item.(*user)
 			content := []byte(fmt.Sprintf("[CHAT]%s", message))
-			mess := newDatamessage(nil, clientUser, user.hubhubClient, content)
+			mess := newDatamessage(nil, clientUser, user.hubClient, content)
 			W.hub.Broadcast <- mess
 		} else {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
@@ -354,21 +354,21 @@ func (W *WORLD) callToAction(c *hubClient, cmd string, message []byte) {
 	}
 }
 
-func (W *WORLD) sendWorldUpdate() {
+func (W *world) sendWorldUpdate() {
 	W.AOIs.computeUpdates()
 	for item := range W.UserList.Iter() {
-		player := item.Value.(*USER)
+		player := item.Value.(*user)
 		message, err := W.AOIs.getUpdateForPlayer(player.X, player.Y)
 		if err == nil {
-			mess := newDatamessage(nil, clientUser, player.hubhubClient, message)
+			mess := newDatamessage(nil, clientUser, player.hubClient, message)
 			W.hub.Unicast <- mess
 		}
 	}
 }
 
 // SendServerMassage message de chat
-func (W *WORLD) sendServerMassage(txt string) {
-	data := CHATMSG{
+func (W *world) sendServerMassage(txt string) {
+	data := chatmsg{
 		From: "Server",
 		Type: 4,
 		Mess: txt,
@@ -379,7 +379,7 @@ func (W *WORLD) sendServerMassage(txt string) {
 	W.hub.Broadcast <- mess
 }
 
-func (W *WORLD) run() {
+func (W *world) run() {
 	ticker := time.NewTicker(W.TimeStep)
 	defer func() {
 		ticker.Stop()
@@ -410,11 +410,11 @@ func (W *WORLD) run() {
 	}
 }
 
-func (W *WORLD) getMapArea(x, y int) []byte {
+func (W *world) getMapArea(x, y int) []byte {
 	return W.Map.exportMapArea(x, y, W.AOIWidth, W.AOIHeight)
 }
 
-func (W *WORLD) getMapImg(x, y int) string {
+func (W *world) getMapImg(x, y int) string {
 	if x == -1 && y == -1 {
 		W.Map.buildMonPage(W)
 		return ""
@@ -422,11 +422,11 @@ func (W *WORLD) getMapImg(x, y int) string {
 	return W.Map.genAOIImage(x, y, W)
 }
 
-func getTileList() []TILE {
-	var TilesList []TILE
+func getTileList() []tile {
+	var TilesList []tile
 
 	clog.Info("World", "getTileList", "Loading Tiles data...")
-	TilesList = make([]TILE, 769)
+	TilesList = make([]tile, 769)
 	f, err := os.Open("../data/TilesList.csv")
 	if err != nil {
 		clog.Fatal("World", "getTileList", err)
@@ -447,7 +447,7 @@ func getTileList() []TILE {
 		item, _ := strconv.ParseBool(record[2])
 		block, _ := strconv.ParseBool(record[3])
 
-		TilesList[ID] = TILE{
+		TilesList[ID] = tile{
 			ID:    ID,
 			Type:  record[1],
 			Item:  item,
@@ -461,7 +461,7 @@ func getTileList() []TILE {
 	return TilesList
 }
 
-func (W *WORLD) getTilesList() []byte {
+func (W *world) getTilesList() []byte {
 	dat, _ := json.Marshal(W.TilesList)
 	return dat
 }
@@ -478,8 +478,8 @@ func getConfValue(iface interface{}, name string) interface{} {
 }
 
 // WorldInit start the world
-func worldInit(zehubManager *hubManager, conf []byte) *WORLD {
-	zeWorld := &WORLD{}
+func worldInit(zehubManager *hubManager, conf []byte) *world {
+	zeWorld := &world{}
 	json.Unmarshal(conf, zeWorld)
 
 	zeWorld.TimeStep = time.Duration(zeWorld.TimeStep) * time.Millisecond

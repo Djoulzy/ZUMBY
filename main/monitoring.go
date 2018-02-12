@@ -18,12 +18,12 @@ const statsTimer = 5 * time.Second
 
 type hubClientList map[string]*hubClient
 
-type Brother struct {
+type brother struct {
 	Tcpaddr  string
 	Httpaddr string
 }
 
-type ServerMetrics struct {
+type serverMetrics struct {
 	SID      string
 	TCPADDR  string
 	HTTPADDR string
@@ -45,11 +45,11 @@ type ServerMetrics struct {
 	MXM      int
 	NBS      int
 	MXS      int
-	BRTHLST  map[string]Brother
+	BRTHLST  map[string]brother
 }
 
-type BrotherList struct {
-	BRTHLST map[string]Brother
+type brotherList struct {
+	BRTHLST map[string]brother
 }
 
 type hubClientsRegister struct {
@@ -58,7 +58,7 @@ type hubClientsRegister struct {
 	Type map[int]hubClientList
 }
 
-type MonParams struct {
+type monParams struct {
 	ServerID          string
 	Httpaddr          string
 	Tcpaddr           string
@@ -68,13 +68,13 @@ type MonParams struct {
 	MaxIncommingConns int
 }
 
-var StartTime time.Time
-var UpTime time.Duration
-var MachineLoad *load.AvgStat
+var startTime time.Time
+var upTime time.Duration
+var machineLoad *load.AvgStat
 var nbcpu int
 var cr hubClientsRegister
-var AddBrother = make(chan map[string]Brother)
-var brotherlist = make(map[string]Brother)
+var addBrother = make(chan map[string]brother)
+var brotherlist = make(map[string]brother)
 
 func getMemUsage() string {
 	v, _ := mem.VirtualMemory()
@@ -86,39 +86,43 @@ func getSwapUsage() string {
 	return fmt.Sprintf("<th>Swap</th><td class='memCell'>%v Mo</td><td class='memCell'>%v Mo</td><td class='memCell'>%.1f%%</td>", (v.Total / 1048576), (v.Free / 1048576), v.UsedPercent)
 }
 
-func addToBrothersList(srv map[string]Brother) {
+func addToBrothersList(srv map[string]brother) {
 	for name, infos := range srv {
 		brotherlist[name] = infos
 	}
 }
 
-func LoadAverage(h *hubManager, p *MonParams) {
+func loadAverage(h *hubManager, p *monParams) {
 	ticker := time.NewTicker(statsTimer)
-	MachineLoad = &load.AvgStat{0, 0, 0}
+	machineLoad = &load.AvgStat{Load1: 0, Load5: 0, Load15: 0}
 	nbcpu, _ := cpu.Counts(true)
-	StartTime = time.Now()
+	startTime = time.Now()
+
+	defer func() {
+		ticker.Stop()
+	}()
 
 	for {
 		select {
-		case newSrv := <-AddBrother:
+		case newSrv := <-addBrother:
 			addToBrothersList(newSrv)
 		case <-ticker.C:
 			tmp, _ := load.Avg()
-			MachineLoad = tmp
-			loadIndice := int(math.Ceil((((MachineLoad.Load1*5 + MachineLoad.Load5*3 + MachineLoad.Load15*2) / 10) / float64(nbcpu)) * 100))
+			machineLoad = tmp
+			loadIndice := int(math.Ceil((((machineLoad.Load1*5 + machineLoad.Load5*3 + machineLoad.Load15*2) / 10) / float64(nbcpu)) * 100))
 			// mess := NewdataMessage(nil, machineLoad.String())
 			t := time.Now()
-			UpTime = time.Since(StartTime)
+			upTime = time.Since(startTime)
 
-			newStats := ServerMetrics{
+			newStats := serverMetrics{
 				SID:      p.ServerID,
 				TCPADDR:  p.Tcpaddr,
 				HTTPADDR: p.Httpaddr,
 				HOST:     fmt.Sprintf("HTTP: %s - TCP: %s", p.Httpaddr, p.Tcpaddr),
 				CPU:      nbcpu,
 				GORTNE:   runtime.NumGoroutine(),
-				STTME:    StartTime.Format("02/01/2006 15:04:05"),
-				UPTME:    UpTime.String(),
+				STTME:    startTime.Format("02/01/2006 15:04:05"),
+				UPTME:    upTime.String(),
 				LSTUPDT:  t.Format("02/01/2006 15:04:05"),
 				LAVG:     loadIndice,
 				MEM:      getMemUsage(),
@@ -135,11 +139,11 @@ func LoadAverage(h *hubManager, p *MonParams) {
 				BRTHLST:  brotherlist,
 			}
 
-			newBrthList := BrotherList{
+			newBrthList := brotherList{
 				BRTHLST: brotherlist,
 			}
 
-			brth_json, _ := json.Marshal(newBrthList)
+			brthJSON, _ := json.Marshal(newBrthList)
 			json, err := json.Marshal(newStats)
 			if err != nil {
 				clog.Error("Monitoring", "LoadAverage", "MON: Cannot send server metrics to listeners ...")
@@ -150,18 +154,15 @@ func LoadAverage(h *hubManager, p *MonParams) {
 					h.Broadcast <- mess
 					mess = newDatamessage(nil, clientServer, nil, append([]byte("[MNIT]"), json...))
 					h.Broadcast <- mess
-					mess = newDatamessage(nil, clientUser, nil, append([]byte("[FLBK]"), brth_json...))
+					mess = newDatamessage(nil, clientUser, nil, append([]byte("[FLBK]"), brthJSON...))
 					h.Broadcast <- mess
 				}
 			}
 		}
 	}
-	defer func() {
-		ticker.Stop()
-	}()
 }
 
-func MonStart(hub *hubManager, p *MonParams) {
+func monStart(hub *hubManager, p *monParams) {
 	// addToBrothersList(list)
-	LoadAverage(hub, p)
+	loadAverage(hub, p)
 }

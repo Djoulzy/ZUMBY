@@ -55,7 +55,7 @@ func (m *HTTPManager) statusPage(w http.ResponseWriter, r *http.Request) {
 		m.Httpaddr,
 		len(m.hubManager.Users),
 		m.hubManager.Users,
-		MachineLoad.String(),
+		machineLoad.String(),
 		string(handShake),
 	}
 

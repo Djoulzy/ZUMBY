@@ -4,3 +4,4 @@ app/config.js
 node_modules
 .npm
 public
+.DS_Store

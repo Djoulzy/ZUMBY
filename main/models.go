@@ -12,7 +12,7 @@ var (
 	spaceChar = []byte{' '}
 )
 
-type Entity struct {
+type entity struct {
 	ID        string `bson:"id" json:"id"`
 	Type      string `bson:"typ" json:"typ"`
 	Face      string `bson:"png" json:"png"`
@@ -22,11 +22,11 @@ type Entity struct {
 	Y         int    `bson:"y" json:"y"` // Row nums
 	Pow       int    `bson:"pow" json:"pow"`
 	Speed     int    `bson:"spd" json:"spd"`
-	AOI       *AOI   `bson:"-" json:"-"`
-	waitState int    `bson:"-" json:"-"`
+	aoi       *AOI
+	waitState int
 }
 
-type Attributes struct {
+type attributes struct {
 	PV     int `bson:"pv" json:"pv"`
 	Starv  int `bson:"st" json:"st"`
 	Thirst int `bson:"th" json:"th"`
@@ -37,23 +37,23 @@ type Attributes struct {
 	Grow   int `bson:"grw" json:"grw"`
 }
 
-type ITEM struct {
+type item struct {
 	ID    int    `bson:"id" json:"id"`
 	Owner string `bson:"-" json:"-"`
 }
 
-type USER struct {
-	hubhubClient *hubClient
-	Entity
-	Attributes
-	Inventory []ITEM `bson:"i" json:"i"`
+type user struct {
+	hubClient *hubClient
+	entity
+	attributes
+	Inventory []item `bson:"i" json:"i"`
 }
 
-type MOB struct {
-	Entity
+type mob struct {
+	entity
 }
 
-type TILE struct {
+type tile struct {
 	ID    int    `bson:"id" json:"id"`
 	Type  string `bson:"type" json:"type"`
 	Item  bool   `bson:"item" json:"item"`
@@ -61,13 +61,13 @@ type TILE struct {
 	Name  string `bson:"name" json:"name"`
 }
 
-type WORLD struct {
+type world struct {
 	hub *hubManager
 	// MobList   map[string]*MOB
 	MobList *cmap.CMap
 	// UserList  map[string]*USER
 	UserList  *cmap.CMap
-	TilesList []TILE
+	TilesList []tile
 	Map       *mapData
 	AOIs      *AOIList
 	TimeStep  time.Duration
@@ -78,7 +78,7 @@ type WORLD struct {
 	MaxMobNum int
 }
 
-type INVENTORY struct {
+type inventory struct {
 	Owner      string `bson:"owner" json:"owner"`
 	ID         int    `bson:"id" json:"id"`
 	FromPocket int    `bson:"fp" json:"fp"`
@@ -87,12 +87,12 @@ type INVENTORY struct {
 	Y          int    `bson:"y" json:"y"`
 }
 
-type CHATMSG struct {
+type chatmsg struct {
 	From string `bson:"from" json:"from"`
 	Type int    `bson:"type" json:"type"`
 	Mess string `bson:"mess" json:"mess"`
 }
 
-func (E Entity) String() string {
-	return fmt.Sprintf("\nID: %s [%s - %s]\nCoord: %dx%d - %s\nAOI: %s", E.ID, E.Type, E.Face, E.X, E.Y, E.Dir, E.AOI)
+func (E entity) String() string {
+	return fmt.Sprintf("\nID: %s [%s - %s]\nCoord: %dx%d - %s\nAOI: %s", E.ID, E.Type, E.Face, E.X, E.Y, E.Dir, E.aoi)
 }

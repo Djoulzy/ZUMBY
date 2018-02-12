@@ -10,14 +10,14 @@ import (
 )
 
 // Cryptor données de cryptage
-var Cryptor *cypher
+var cryptor *cypher
 
 // ScaleList Liste des serveur voisins
-var ScaleList *ServersList
+var scaleList *serversList
 
 // var Storage *storage.Driver
 
-var zeWorld *WORLD
+var zeWorld *world
 var zehubManager *hubManager
 
 func setMaxProcs(nb int) {
@@ -75,7 +75,7 @@ func main() {
 		clog.Warn("server", "main", "Setting MaxUser to %d.", conf.MaxUsersConns)
 	}
 
-	Cryptor = &cypher{
+	cryptor = &cypher{
 		HashSize: conf.HashSize,
 		HexKey:   []byte(conf.HexKey),
 		HexIV:    []byte(conf.HexIV),
@@ -89,7 +89,7 @@ func main() {
 	zeWorld = worldInit(zehubManager, confJSON)
 	clog.ServiceCallback = zeWorld.sendServerMassage
 
-	monParams := &MonParams{
+	monParams := &monParams{
 		ServerID:          conf.Name,
 		Httpaddr:          conf.HTTPaddr,
 		Tcpaddr:           conf.TCPaddr,
@@ -98,7 +98,7 @@ func main() {
 		MaxServersConns:   conf.MaxServersConns,
 		MaxIncommingConns: conf.MaxIncommingConns,
 	}
-	go MonStart(zehubManager, monParams)
+	go monStart(zehubManager, monParams)
 
 	tcpParams := &tcpManager{
 		ServerName:               conf.Name,
@@ -109,11 +109,11 @@ func main() {
 		ScalingCheckServerPeriod: conf.ScalingCheckServerPeriod,
 		MaxServersConns:          conf.MaxServersConns,
 		CallToAction:             CallToAction,
-		Cryptor:                  Cryptor,
+		Cryptor:                  cryptor,
 	}
 
-	ScaleList = ScaleInit(tcpParams, &conf.KnownBrothers.Servers)
-	go ScaleList.ScaleStart()
+	scaleList = scaleInit(tcpParams, &conf.KnownBrothers.Servers)
+	go scaleList.scaleStart()
 	// go scaling.Start(ScalingServers)
 
 	httpParams := &HTTPManager{
@@ -125,7 +125,7 @@ func main() {
 		HandshakeTimeout:    conf.HandshakeTimeout,
 		NBAcceptBySecond:    conf.NBAcceptBySecond,
 		CallToAction:        CallToAction,
-		Cryptor:             Cryptor,
+		Cryptor:             cryptor,
 		MapGenCallback:      zeWorld.getMapArea,
 		hubClientDisconnect: zeWorld.dropUser,
 		GetTilesList:        zeWorld.getTilesList,

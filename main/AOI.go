@@ -25,7 +25,7 @@ type AOI struct {
 type AOIList [][]*AOI
 
 // BuildAOIList Decoupe la carte en AOI
-func BuildAOIList(W *WORLD) *AOIList {
+func BuildAOIList(W *world) *AOIList {
 	width := W.Map.Width / W.AOIWidth
 	height := W.Map.Height / W.AOIHeight
 	clog.Info("AOI", "BuildAOIList", "Map Size: %dx%d -> AOIList: %dx%d", W.Map.Width, W.Map.Height, width, height)
@@ -87,12 +87,12 @@ func (aoi *AOI) addEvent(mess []byte) {
 }
 
 func (aoi *AOI) addEntity(entity interface{}) {
-	if typedEnt, ok := entity.(*MOB); ok {
-		typedEnt.AOI = aoi
+	if typedEnt, ok := entity.(*mob); ok {
+		typedEnt.aoi = aoi
 		aoi.EntitiesList[typedEnt.ID] = entity
 	} else {
-		if typedEnt, ok := entity.(*USER); ok {
-			typedEnt.AOI = aoi
+		if typedEnt, ok := entity.(*user); ok {
+			typedEnt.aoi = aoi
 			aoi.EntitiesList[typedEnt.ID] = entity
 		}
 	}
@@ -113,17 +113,17 @@ func (aoi *AOI) addEntity(entity interface{}) {
 
 func (L *AOIList) moveEntity(x, y int, entity interface{}) {
 	aoi := L.getAOIfromCoord(x, y)
-	if typedEnt, ok := entity.(*MOB); ok {
-		if typedEnt.AOI != aoi {
-			typedEnt.AOI = nil
+	if typedEnt, ok := entity.(*mob); ok {
+		if typedEnt.aoi != aoi {
+			typedEnt.aoi = nil
 			delete(aoi.EntitiesList, typedEnt.ID)
 			aoi.addEntity(entity)
 		}
 		typedEnt.waitState = typedEnt.Speed
 	} else {
-		if typedEnt, ok := entity.(*USER); ok {
-			if typedEnt.AOI != aoi {
-				typedEnt.AOI = nil
+		if typedEnt, ok := entity.(*user); ok {
+			if typedEnt.aoi != aoi {
+				typedEnt.aoi = nil
 				delete(aoi.EntitiesList, typedEnt.ID)
 				aoi.addEntity(entity)
 			}
@@ -142,13 +142,13 @@ func (L *AOIList) addEntity(x, y int, entity interface{}) {
 func (L *AOIList) dropEntity(x, y int, entity interface{}) {
 	var message []byte
 	aoi := L.getAOIfromCoord(x, y)
-	if typedEnt, ok := entity.(*MOB); ok {
-		typedEnt.AOI = nil
+	if typedEnt, ok := entity.(*mob); ok {
+		typedEnt.aoi = nil
 		delete(aoi.EntitiesList, typedEnt.ID)
 		message = []byte(fmt.Sprintf("[KILL]%s", typedEnt.ID))
 	} else {
-		if typedEnt, ok := entity.(*USER); ok {
-			typedEnt.AOI = nil
+		if typedEnt, ok := entity.(*user); ok {
+			typedEnt.aoi = nil
 			delete(aoi.EntitiesList, typedEnt.ID)
 			message = []byte(fmt.Sprintf("[KILL]%s", typedEnt.ID))
 		}

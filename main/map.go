@@ -74,7 +74,7 @@ type mapData struct {
 	Entities [][]interface{}
 	Over     [][]int
 	Ground   [][]int
-	Items    [][]ITEM
+	Items    [][]item
 	FileData fileMap
 }
 
@@ -91,12 +91,12 @@ func (M *mapData) loadTiledJSONMap(file string) {
 
 	M.Ground = make([][]int, M.Width)
 	M.Over = make([][]int, M.Width)
-	M.Items = make([][]ITEM, M.Width)
+	M.Items = make([][]item, M.Width)
 	M.Entities = make([][]interface{}, M.Width)
 	for i := 0; i < M.Width; i++ {
 		M.Entities[i] = make([]interface{}, M.Height)
 		M.Ground[i] = make([]int, M.Height)
-		M.Items[i] = make([]ITEM, M.Height)
+		M.Items[i] = make([]item, M.Height)
 		M.Over[i] = make([]int, M.Height)
 	}
 
@@ -106,7 +106,7 @@ func (M *mapData) loadTiledJSONMap(file string) {
 		for col < M.Width {
 			M.Ground[col][row] = M.FileData.Layers[0].Data[(row*M.Width)+col]
 			M.Over[col][row] = M.FileData.Layers[2].Data[(row*M.Width)+col]
-			M.Items[col][row] = ITEM{
+			M.Items[col][row] = item{
 				ID: M.FileData.Layers[1].Data[(row*M.Width)+col],
 			}
 			M.Entities[col][row] = nil
@@ -220,9 +220,9 @@ func (M *mapData) draw() {
 			}
 			if M.Entities[x][y] != nil {
 				switch M.Entities[x][y].(type) {
-				case *MOB:
+				case *mob:
 					visuel = clog.GetColoredString(" Z ", "white", "red")
-				case *USER:
+				case *user:
 					visuel = clog.GetColoredString(" P ", "black", "yellow")
 				}
 			}
@@ -241,7 +241,7 @@ func drawRect(img *image.RGBA, x, y, width, height int, c color.Color) {
 	}
 }
 
-func (M *mapData) genAOIImage(x, y int, W *WORLD) string {
+func (M *mapData) genAOIImage(x, y int, W *world) string {
 	pixel := 11
 	img := image.NewRGBA(image.Rect(0, 0, W.AOIWidth*pixel, W.AOIHeight*pixel))
 
@@ -257,9 +257,9 @@ func (M *mapData) genAOIImage(x, y int, W *WORLD) string {
 			}
 			if M.Entities[startx+aoix][starty+aoiy] != nil {
 				switch M.Entities[startx+aoix][starty+aoiy].(type) {
-				case *MOB:
+				case *mob:
 					drawRect(img, aoix*pixel, aoiy*pixel, pixel, pixel, color.RGBA{255, 0, 0, 255})
-				case *USER:
+				case *user:
 					drawRect(img, aoix*pixel, aoiy*pixel, pixel, pixel, color.RGBA{0, 255, 0, 255})
 				}
 			}
@@ -278,7 +278,7 @@ func (M *mapData) genAOIImage(x, y int, W *WORLD) string {
 	return area
 }
 
-func (M *mapData) genWorldImage(W *WORLD) {
+func (M *mapData) genWorldImage(W *world) {
 	img := image.NewRGBA(image.Rect(0, 0, M.Width, M.Height))
 
 	for y := 0; y < M.Height; y++ {
@@ -290,9 +290,9 @@ func (M *mapData) genWorldImage(W *WORLD) {
 			}
 			if M.Entities[x][y] != nil {
 				switch M.Entities[x][y].(type) {
-				case *MOB:
+				case *mob:
 					img.Set(x, y, color.RGBA{255, 0, 0, 255})
-				case *USER:
+				case *user:
 					img.Set(x, y, color.RGBA{0, 255, 0, 255})
 				}
 			}
@@ -305,7 +305,7 @@ func (M *mapData) genWorldImage(W *WORLD) {
 	png.Encode(f, img)
 }
 
-func (M *mapData) buildMonPage(W *WORLD) {
+func (M *mapData) buildMonPage(W *world) {
 	var area = "<!DOCTYPE html><html ><head><meta charset='UTF-8'><title>Mon Global</title>"
 	area = fmt.Sprintf("%s<meta http-equiv='refresh' content='1' /></head><body><map name='map'>", area)
 	nby := M.Height / W.AOIHeight
