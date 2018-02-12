@@ -1,11 +1,15 @@
-package world
+package main
 
 import (
 	"fmt"
 	"time"
 
 	"github.com/Djoulzy/Tools/cmap"
-	"github.com/Djoulzy/ZUMBY/hub"
+)
+
+var (
+	Newline = []byte{'\r', '\n'}
+	Space   = []byte{' '}
 )
 
 type Entity struct {
@@ -39,7 +43,7 @@ type ITEM struct {
 }
 
 type USER struct {
-	hubClient *hub.Client
+	hubClient *Client
 	Entity
 	Attributes
 	Inventory []ITEM `bson:"i" json:"i"`
@@ -58,7 +62,7 @@ type TILE struct {
 }
 
 type WORLD struct {
-	hub *hub.Hub
+	hub *Hub
 	// MobList   map[string]*MOB
 	MobList *cmap.CMap
 	// UserList  map[string]*USER

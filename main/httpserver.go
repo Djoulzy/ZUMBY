@@ -1,4 +1,4 @@
-package httpserver
+package main
 
 import (
 	"bytes"
@@ -13,9 +13,6 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/Djoulzy/Tools/clog"
-	"github.com/Djoulzy/ZUMBY/hub"
-	"github.com/Djoulzy/ZUMBY/monitoring"
-	"github.com/Djoulzy/ZUMBY/urlcrypt"
 )
 
 const (
@@ -25,23 +22,18 @@ const (
 	maxMessageSize = 512
 )
 
-var (
-	Newline = []byte{'\r', '\n'}
-	Space   = []byte{' '}
-)
-
 var Upgrader *websocket.Upgrader
 
-type Manager struct {
+type HTTPManager struct {
 	Httpaddr         string
 	ServerName       string
-	Hub              *hub.Hub
+	Hub              *Hub
 	ReadBufferSize   int
 	WriteBufferSize  int
 	NBAcceptBySecond int
 	HandshakeTimeout int
-	CallToAction     func(*hub.Client, []byte)
-	Cryptor          *urlcrypt.Cypher
+	CallToAction     func(*Client, []byte)
+	Cryptor          *Cypher
 	MapGenCallback   func(x, y int) []byte
 	GetTilesList     func() []byte
 	GetMapImg        func(x, y int) string
@@ -50,19 +42,19 @@ type Manager struct {
 	WorldHeight      int
 }
 
-func (m *Manager) statusPage(w http.ResponseWriter, r *http.Request) {
+func (m *HTTPManager) statusPage(w http.ResponseWriter, r *http.Request) {
 	handShake, _ := m.Cryptor.Encrypt_b64("MNTR|Monitoring|MNTR")
 	var data = struct {
 		Host   string
 		Nb     int
-		Users  map[string]*hub.Client
+		Users  map[string]*Client
 		Stats  string
 		HShake string
 	}{
 		m.Httpaddr,
 		len(m.Hub.Users),
 		m.Hub.Users,
-		monitoring.MachineLoad.String(),
+		MachineLoad.String(),
 		string(handShake),
 	}
 
@@ -76,7 +68,7 @@ func (m *Manager) statusPage(w http.ResponseWriter, r *http.Request) {
 	homeTempl.Execute(w, &data)
 }
 
-func (m *Manager) testPage(w http.ResponseWriter, r *http.Request) {
+func (m *HTTPManager) testPage(w http.ResponseWriter, r *http.Request) {
 	handShake, _ := m.Cryptor.Encrypt_b64("LOAD_1|TestPage|USER")
 
 	var data = struct {
@@ -95,7 +87,7 @@ func (m *Manager) testPage(w http.ResponseWriter, r *http.Request) {
 	homeTempl.Execute(w, &data)
 }
 
-func (m *Manager) Connect() *websocket.Conn {
+func (m *HTTPManager) Connect() *websocket.Conn {
 	u := url.URL{Scheme: "ws", Host: m.Httpaddr, Path: "/ws"}
 	clog.Info("HTTPServer", "Connect", "Connecting to %s", u.String())
 
@@ -108,7 +100,7 @@ func (m *Manager) Connect() *websocket.Conn {
 	return conn
 }
 
-func (m *Manager) Reader(conn *websocket.Conn, cli *hub.Client) {
+func (m *HTTPManager) Reader(conn *websocket.Conn, cli *Client) {
 	defer func() {
 		m.ClientDisconnect(cli.Name)
 		m.Hub.Unregister <- cli
@@ -134,12 +126,12 @@ func (m *Manager) Reader(conn *websocket.Conn, cli *hub.Client) {
 	}
 }
 
-func (m *Manager) _write(ws *websocket.Conn, mt int, message []byte) error {
+func (m *HTTPManager) _write(ws *websocket.Conn, mt int, message []byte) error {
 	ws.SetWriteDeadline(time.Now().Add(writeWait))
 	return ws.WriteMessage(mt, message)
 }
 
-func (m *Manager) Writer(conn *websocket.Conn, cli *hub.Client) {
+func (m *HTTPManager) Writer(conn *websocket.Conn, cli *Client) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -177,7 +169,7 @@ func (m *Manager) Writer(conn *websocket.Conn, cli *hub.Client) {
 }
 
 // serveWs handles websocket requests from the peer.
-func (m *Manager) wsConnect(w http.ResponseWriter, r *http.Request) {
+func (m *HTTPManager) wsConnect(w http.ResponseWriter, r *http.Request) {
 	var ua string
 	name := r.Header["Sec-Websocket-Key"][0]
 	if len(r.Header["User-Agent"]) > 0 {
@@ -186,7 +178,7 @@ func (m *Manager) wsConnect(w http.ResponseWriter, r *http.Request) {
 		ua = "n/a"
 	}
 
-	if m.Hub.UserExists(name, hub.ClientUser) {
+	if m.Hub.UserExists(name, ClientUser) {
 		clog.Warn("HTTPServer", "wsConnect", "Client %s already exists ... Refusing connection", name)
 		return
 	}
@@ -198,8 +190,8 @@ func (m *Manager) wsConnect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &hub.Client{Quit: make(chan bool),
-		CType: hub.ClientUndefined, Send: make(chan []byte, 256), Enqueue: make(chan []byte, 256),
+	client := &Client{Quit: make(chan bool),
+		CType: ClientUndefined, Send: make(chan []byte, 256), Enqueue: make(chan []byte, 256),
 		CallToAction: m.CallToAction, Addr: httpconn.RemoteAddr().String(),
 		Name: name, Content_id: 0, Front_id: "", App_id: "", Country: "", User_agent: ua}
 
@@ -220,7 +212,7 @@ func throttleClients(h http.Handler, n int) http.Handler {
 	})
 }
 
-func (m *Manager) dataServe(w http.ResponseWriter, r *http.Request) {
+func (m *HTTPManager) dataServe(w http.ResponseWriter, r *http.Request) {
 	name := ".." + r.URL.Path
 	file, err := os.Open(name)
 	if err != nil {
@@ -235,7 +227,7 @@ func (m *Manager) dataServe(w http.ResponseWriter, r *http.Request) {
 	// w.Write(mapJSON)
 }
 
-func (m *Manager) getGameData(w http.ResponseWriter, r *http.Request) {
+func (m *HTTPManager) getGameData(w http.ResponseWriter, r *http.Request) {
 	var str []byte
 	query := strings.Split(string(r.URL.Path[1:]), "/")
 
@@ -251,7 +243,7 @@ func (m *Manager) getGameData(w http.ResponseWriter, r *http.Request) {
 	w.Write(str)
 }
 
-func (m *Manager) getMapArea(w http.ResponseWriter, r *http.Request) {
+func (m *HTTPManager) getMapArea(w http.ResponseWriter, r *http.Request) {
 	query := strings.Split(string(r.URL.Path[1:]), "/")
 	coord := strings.Split(query[1], "_")
 
@@ -264,7 +256,7 @@ func (m *Manager) getMapArea(w http.ResponseWriter, r *http.Request) {
 	w.Write(str)
 }
 
-func (m *Manager) getMonPage(w http.ResponseWriter, r *http.Request) {
+func (m *HTTPManager) getMonPage(w http.ResponseWriter, r *http.Request) {
 	query := strings.Split(string(r.URL.Path[1:]), "/")
 	coord := strings.Split(query[1], "_")
 
@@ -281,7 +273,7 @@ func (m *Manager) getMonPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (m *Manager) Start(conf *Manager) {
+func (m *HTTPManager) Start(conf *HTTPManager) {
 	m = conf
 
 	// myHttp := &http.Server{

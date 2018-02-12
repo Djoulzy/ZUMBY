@@ -1,4 +1,4 @@
-package world
+package main
 
 import (
 	"bufio"
@@ -16,8 +16,6 @@ import (
 
 	"github.com/Djoulzy/Tools/clog"
 	"github.com/Djoulzy/Tools/cmap"
-	"github.com/Djoulzy/ZUMBY/hub"
-	"github.com/Djoulzy/ZUMBY/storage"
 	"github.com/nu7hatch/gouuid"
 )
 
@@ -182,7 +180,7 @@ func (W *WORLD) DropUser(id string) {
 	if item != nil {
 		user := item.(*USER)
 		dat, _ := json.Marshal(user)
-		storage.SaveUser(id, dat)
+		SaveUser(id, dat)
 		W.AOIs.dropEntity(user.X, user.Y, user)
 		W.Map.Entities[user.X][user.Y] = nil
 		W.UserList.Delete(id)
@@ -191,9 +189,9 @@ func (W *WORLD) DropUser(id string) {
 	}
 }
 
-func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
+func (W *WORLD) LogUser(c *Client) ([]byte, error) {
 	var infos *USER
-	dat, err := storage.LoadUser(c.Name)
+	dat, err := LoadUser(c.Name)
 	if err != nil {
 		infos = &USER{
 			Entity: Entity{
@@ -210,7 +208,7 @@ func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
 			clog.Error("World", "logUser", "Cant create user %s", err)
 			return dat, err
 		}
-		storage.SaveUser(c.Name, dat)
+		SaveUser(c.Name, dat)
 		clog.Warn("World", "logUser", "Creating new user %s", dat)
 	} else {
 		err := json.Unmarshal(dat, &infos)
@@ -224,7 +222,7 @@ func (W *WORLD) LogUser(c *hub.Client) ([]byte, error) {
 	infos.hubClient = c
 
 	message := W.AOIs.getAOIEntities(infos.X, infos.Y)
-	mess := hub.NewMessage(nil, hub.ClientUser, c, message)
+	mess := NewMessage(nil, ClientUser, c, message)
 	W.hub.Unicast <- mess
 	clog.Service("World", "Run", "%s is now connected...", c.Name)
 
@@ -273,7 +271,7 @@ func (W *WORLD) checkTargetHit(infos *USER) {
 	}
 }
 
-func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
+func (W *WORLD) CallToAction(c *Client, cmd string, message []byte) {
 	switch cmd {
 	case "[FIRE]":
 		var infos USER
@@ -298,7 +296,7 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 				W.AOIs.addEvent(infos.X, infos.Y, mess)
 			} else {
 				tmp := []byte(fmt.Sprintf("[GOXY]{\"id\":\"%s\",\"x\":%d,\"y\":%d}", user.ID, user.X, user.Y))
-				mess := hub.NewMessage(nil, hub.ClientUser, user.hubClient, tmp)
+				mess := NewMessage(nil, ClientUser, user.hubClient, tmp)
 				W.hub.Unicast <- mess
 			}
 		} else {
@@ -344,7 +342,7 @@ func (W *WORLD) CallToAction(c *hub.Client, cmd string, message []byte) {
 			item, _ := W.UserList.Get(infos.From)
 			user := item.(*USER)
 			content := []byte(fmt.Sprintf("[CHAT]%s", message))
-			mess := hub.NewMessage(nil, hub.ClientUser, user.hubClient, content)
+			mess := NewMessage(nil, ClientUser, user.hubClient, content)
 			W.hub.Broadcast <- mess
 		} else {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
@@ -360,7 +358,7 @@ func (W *WORLD) sendWorldUpdate() {
 		player := item.Value.(*USER)
 		message, err := W.AOIs.getUpdateForPlayer(player.X, player.Y)
 		if err == nil {
-			mess := hub.NewMessage(nil, hub.ClientUser, player.hubClient, message)
+			mess := NewMessage(nil, ClientUser, player.hubClient, message)
 			W.hub.Unicast <- mess
 		}
 	}
@@ -374,7 +372,7 @@ func (W *WORLD) SendServerMassage(txt string) {
 	}
 	json, _ := json.Marshal(data)
 	message := []byte(fmt.Sprintf("[CHAT]%s", json))
-	mess := hub.NewMessage(nil, hub.ClientUser, nil, message)
+	mess := NewMessage(nil, ClientUser, nil, message)
 	W.hub.Broadcast <- mess
 }
 
@@ -477,7 +475,7 @@ func getConfValue(iface interface{}, name string) interface{} {
 	return nil
 }
 
-func Init(zeHub *hub.Hub, conf []byte) *WORLD {
+func WorldInit(zeHub *Hub, conf []byte) *WORLD {
 	zeWorld := &WORLD{}
 	json.Unmarshal(conf, zeWorld)
 

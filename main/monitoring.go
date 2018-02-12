@@ -1,4 +1,4 @@
-package monitoring
+package main
 
 import (
 	"encoding/json"
@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/Djoulzy/ZUMBY/hub"
 	"github.com/Djoulzy/Tools/clog"
 
 	"github.com/shirou/gopsutil/cpu"
@@ -17,7 +16,7 @@ import (
 
 const statsTimer = 5 * time.Second
 
-type ClientList map[string]*hub.Client
+type ClientList map[string]*Client
 
 type Brother struct {
 	Tcpaddr  string
@@ -59,7 +58,7 @@ type ClientsRegister struct {
 	Type map[int]ClientList
 }
 
-type Params struct {
+type MonParams struct {
 	ServerID          string
 	Httpaddr          string
 	Tcpaddr           string
@@ -93,7 +92,7 @@ func addToBrothersList(srv map[string]Brother) {
 	}
 }
 
-func LoadAverage(h *hub.Hub, p *Params) {
+func LoadAverage(h *Hub, p *MonParams) {
 	ticker := time.NewTicker(statsTimer)
 	MachineLoad = &load.AvgStat{0, 0, 0}
 	nbcpu, _ := cpu.Counts(true)
@@ -147,11 +146,11 @@ func LoadAverage(h *hub.Hub, p *Params) {
 			} else {
 				if len(h.Monitors)+len(h.Servers) > 0 {
 					h.SentMessByTicks = 0
-					mess := hub.NewMessage(nil, hub.ClientMonitor, nil, json)
+					mess := NewMessage(nil, ClientMonitor, nil, json)
 					h.Broadcast <- mess
-					mess = hub.NewMessage(nil, hub.ClientServer, nil, append([]byte("[MNIT]"), json...))
+					mess = NewMessage(nil, ClientServer, nil, append([]byte("[MNIT]"), json...))
 					h.Broadcast <- mess
-					mess = hub.NewMessage(nil, hub.ClientUser, nil, append([]byte("[FLBK]"), brth_json...))
+					mess = NewMessage(nil, ClientUser, nil, append([]byte("[FLBK]"), brth_json...))
 					h.Broadcast <- mess
 				}
 			}
@@ -162,7 +161,7 @@ func LoadAverage(h *hub.Hub, p *Params) {
 	}()
 }
 
-func Start(hub *hub.Hub, p *Params) {
+func MonStart(hub *Hub, p *MonParams) {
 	// addToBrothersList(list)
 	LoadAverage(hub, p)
 }

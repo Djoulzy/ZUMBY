@@ -1,13 +1,13 @@
-package scaling
+package main
 
 import (
 	"os"
 	"testing"
 
+	"github.com/Djoulzy/Tools/clog"
 	"github.com/Djoulzy/ZUMBY/hub"
 	"github.com/Djoulzy/ZUMBY/monitoring"
 	"github.com/Djoulzy/ZUMBY/nettools/tcpserver"
-	"github.com/Djoulzy/Tools/clog"
 	"github.com/stretchr/testify/assert"
 )
 

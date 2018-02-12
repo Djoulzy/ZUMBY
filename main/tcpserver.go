@@ -1,4 +1,4 @@
-package tcpserver
+package main
 
 import (
 	"bufio"
@@ -9,29 +9,22 @@ import (
 	"time"
 
 	// "github.com/davecgh/go-spew/spew"
-	"github.com/Djoulzy/ZUMBY/hub"
-	"github.com/Djoulzy/ZUMBY/urlcrypt"
 	"github.com/Djoulzy/Tools/clog"
 )
 
-var (
-	Newline = []byte{'\r', '\n'}
-	Space   = []byte{' '}
-)
-
-type Manager struct {
+type TCPManager struct {
 	Tcpaddr                  string
 	ServerName               string
-	Hub                      *hub.Hub
+	Hub                      *Hub
 	MaxServersConns          int
 	ConnectTimeOut           int
 	WriteTimeOut             int
 	ScalingCheckServerPeriod int
-	CallToAction             func(*hub.Client, []byte)
-	Cryptor                  *urlcrypt.Cypher
+	CallToAction             func(*Client, []byte)
+	Cryptor                  *Cypher
 }
 
-func (m *Manager) reader(conn *net.TCPConn, cli *hub.Client) {
+func (m *TCPManager) reader(conn *net.TCPConn, cli *Client) {
 	defer func() {
 		conn.Close()
 	}()
@@ -56,7 +49,7 @@ func (m *Manager) reader(conn *net.TCPConn, cli *hub.Client) {
 	}
 }
 
-func (m *Manager) writer(conn *net.TCPConn, cli *hub.Client) {
+func (m *TCPManager) writer(conn *net.TCPConn, cli *Client) {
 	defer func() {
 		conn.Close()
 	}()
@@ -90,7 +83,7 @@ func (m *Manager) writer(conn *net.TCPConn, cli *hub.Client) {
 // 	return ip[0]
 // }
 
-func (m *Manager) Connect(addr string) (*net.TCPConn, error) {
+func (m *TCPManager) Connect(addr string) (*net.TCPConn, error) {
 	conn, err := net.DialTimeout("tcp", addr, time.Second*time.Duration(m.ConnectTimeOut))
 	// addr, _ := net.ResolveTCPAddr("tcp", m.Tcpaddr)
 	// conn, err := net.DialTCP("tcp", nil, addr)
@@ -101,20 +94,20 @@ func (m *Manager) Connect(addr string) (*net.TCPConn, error) {
 	return conn.(*net.TCPConn), err
 }
 
-func (m *Manager) newClient(addr string, name string) *hub.Client {
-	client := &hub.Client{Quit: make(chan bool),
-		CType: hub.ClientUndefined, Send: make(chan []byte, 256), CallToAction: m.CallToAction, Addr: addr,
+func (m *TCPManager) newClient(addr string, name string) *Client {
+	client := &Client{Quit: make(chan bool),
+		CType: ClientUndefined, Send: make(chan []byte, 256), CallToAction: m.CallToAction, Addr: addr,
 		Name: name, Content_id: 0, Front_id: "", App_id: "", Country: "", User_agent: "TCP Socket"}
 	m.Hub.Register <- client
 	// <-client.Consistent
 	return client
 }
 
-func (m *Manager) NewOutgoingConn(conn *net.TCPConn, toName string, wg *sync.WaitGroup) {
+func (m *TCPManager) NewOutgoingConn(conn *net.TCPConn, toName string, wg *sync.WaitGroup) {
 	clog.Debug("TCPserver", "NewOutgoingConn", "Contacting %s", conn.RemoteAddr().String())
 	client := m.newClient(conn.RemoteAddr().String(), toName)
 	handShake, _ := m.Cryptor.Encrypt_b64(fmt.Sprintf("%s|%s|SERV", m.ServerName, m.Tcpaddr))
-	mess := hub.NewMessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
+	mess := NewMessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
 	m.Hub.Unicast <- mess
 
 	go m.writer(conn, client)
@@ -124,10 +117,10 @@ func (m *Manager) NewOutgoingConn(conn *net.TCPConn, toName string, wg *sync.Wai
 	// <-client.Consistent
 }
 
-func (m *Manager) NewIncommingConn(conn *net.TCPConn, wg *sync.WaitGroup) {
+func (m *TCPManager) NewIncommingConn(conn *net.TCPConn, wg *sync.WaitGroup) {
 	client := m.newClient(conn.RemoteAddr().String(), conn.RemoteAddr().String())
 	handShake, _ := m.Cryptor.Encrypt_b64(fmt.Sprintf("%s|%s|SERV", m.ServerName, m.Tcpaddr))
-	mess := hub.NewMessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
+	mess := NewMessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
 	m.Hub.Unicast <- mess
 
 	go m.writer(conn, client)
@@ -137,7 +130,7 @@ func (m *Manager) NewIncommingConn(conn *net.TCPConn, wg *sync.WaitGroup) {
 	// <-client.Consistent
 }
 
-func (m *Manager) Start(conf *Manager) {
+func (m *TCPManager) Start(conf *TCPManager) {
 	var wg sync.WaitGroup
 
 	m = conf

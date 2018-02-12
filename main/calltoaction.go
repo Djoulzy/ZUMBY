@@ -5,23 +5,22 @@ import (
 	"strings"
 
 	"github.com/Djoulzy/Tools/clog"
-	"github.com/Djoulzy/ZUMBY/hub"
 )
 
-func welcomeNewMonitor(c *hub.Client, newName string, app_id string) {
+func welcomeNewMonitor(c *Client, newName string, app_id string) {
 	if len(zeHub.Monitors) >= conf.MaxMonitorsConns {
 		zeHub.Unregister <- c
 		// <-c.Consistent
 	} else {
-		zeHub.Newrole(&hub.ConnModifier{Client: c, NewName: c.Name, NewType: hub.ClientMonitor})
+		zeHub.Newrole(&ConnModifier{Client: c, NewName: c.Name, NewType: ClientMonitor})
 		c.App_id = app_id
 		clog.Info("server", "welcomeNewMonitor", "Accepting %s", c.Name)
 	}
 }
 
-func welcomeNewUser(c *hub.Client, newName string, app_id string) {
-	if zeHub.UserExists(c.Name, hub.ClientUndefined) {
-		if len(zeHub.Users) >= conf.MaxUsersConns && !zeHub.UserExists(newName, hub.ClientUser) {
+func welcomeNewUser(c *Client, newName string, app_id string) {
+	if zeHub.UserExists(c.Name, ClientUndefined) {
+		if len(zeHub.Users) >= conf.MaxUsersConns && !zeHub.UserExists(newName, ClientUser) {
 			clog.Warn("CallToAction", "welcomeNewUser", "Too many Users connections, rejecting %s (In:%d/Cl:%d).", c.Name, len(zeHub.Incomming), len(zeHub.Users))
 			if !ScaleList.RedirectConnection(c) {
 				clog.Error("CallToAction", "welcomeNewUser", "NO FREE SLOTS !!!")
@@ -30,7 +29,7 @@ func welcomeNewUser(c *hub.Client, newName string, app_id string) {
 			// <-c.Consistent
 		} else {
 			clog.Info("CallToAction", "welcomeNewUser", "Identifying %s as %s", c.Name, newName)
-			zeHub.Newrole(&hub.ConnModifier{Client: c, NewName: newName, NewType: hub.ClientUser})
+			zeHub.Newrole(&ConnModifier{Client: c, NewName: newName, NewType: ClientUser})
 			c.App_id = app_id
 			ScaleList.DispatchNewConnection(zeHub, c.Name)
 
@@ -42,7 +41,7 @@ func welcomeNewUser(c *hub.Client, newName string, app_id string) {
 				zeHub.Unregister <- c
 			} else {
 				message := []byte(fmt.Sprintf("[WLCM]%s", infos))
-				mess := hub.NewMessage(nil, hub.ClientUser, c, message)
+				mess := NewMessage(nil, ClientUser, c, message)
 				zeHub.Unicast <- mess
 			}
 		}
@@ -53,7 +52,7 @@ func welcomeNewUser(c *hub.Client, newName string, app_id string) {
 	}
 }
 
-func welcomeNewServer(c *hub.Client, newName string, addr string) {
+func welcomeNewServer(c *Client, newName string, addr string) {
 	if len(zeHub.Servers) >= conf.MaxServersConns {
 		clog.Warn("server", "welcomeNewServer", "Too many Server connections, rejecting %s (In:%d/Cl:%d).", c.Name, len(zeHub.Incomming), len(zeHub.Servers))
 		zeHub.Unregister <- c
@@ -61,9 +60,9 @@ func welcomeNewServer(c *hub.Client, newName string, addr string) {
 		return
 	}
 
-	if zeHub.UserExists(c.Name, hub.ClientUndefined) {
+	if zeHub.UserExists(c.Name, ClientUndefined) {
 		clog.Info("server", "welcomeNewServer", "Identifying %s as %s", c.Name, newName)
-		zeHub.Newrole(&hub.ConnModifier{Client: c, NewName: newName, NewType: hub.ClientServer})
+		zeHub.Newrole(&ConnModifier{Client: c, NewName: newName, NewType: ClientServer})
 		c.Addr = addr
 		ScaleList.AddNewConnectedServer(c)
 	} else {
@@ -73,7 +72,7 @@ func welcomeNewServer(c *hub.Client, newName string, addr string) {
 	}
 }
 
-func HandShake(c *hub.Client, message []byte) {
+func HandShake(c *Client, message []byte) {
 	uncrypted_message, _ := Cryptor.Decrypt_b64(string(message))
 	clog.Info("server", "HandShake", "New Incomming Client %s (%s)", c.Name, uncrypted_message)
 	infos := strings.Split(string(uncrypted_message), "|")
@@ -99,7 +98,7 @@ func HandShake(c *hub.Client, message []byte) {
 	}
 }
 
-func CallToAction(c *hub.Client, message []byte) {
+func CallToAction(c *Client, message []byte) {
 	if len(message) < 6 {
 		clog.Warn("server", "CallToAction", "Bad Command '%s', disconnecting client %s.", message, c.Name)
 		zeHub.Unregister <- c
@@ -110,14 +109,14 @@ func CallToAction(c *hub.Client, message []byte) {
 	cmd_group := string(message[0:6])
 	action_group := message[6:]
 
-	if c.CType != hub.ClientUndefined {
+	if c.CType != ClientUndefined {
 		switch cmd_group {
 		case "[BCST]":
 			// clog.Trace("", "", "%s", message)
-			mess := hub.NewMessage(c, hub.ClientUser, nil, message)
+			mess := NewMessage(c, ClientUser, nil, message)
 			zeHub.Broadcast <- mess
-			if c.CType != hub.ClientServer {
-				mess = hub.NewMessage(c, hub.ClientServer, nil, message)
+			if c.CType != ClientServer {
+				mess = NewMessage(c, ClientServer, nil, message)
 				zeHub.Broadcast <- mess
 			}
 		// case "[UCST]":
@@ -131,7 +130,7 @@ func CallToAction(c *hub.Client, message []byte) {
 			ScaleList.UpdateMetrics(c.Addr, action_group)
 		case "[KILL]":
 			id := string(action_group)
-			if zeHub.UserExists(id, hub.ClientUser) {
+			if zeHub.UserExists(id, ClientUser) {
 				userToKill := zeHub.Users[id]
 				clog.Info("server", "CallToAction", "Killing user %s", action_group)
 				zeHub.Unregister <- userToKill
@@ -139,7 +138,7 @@ func CallToAction(c *hub.Client, message []byte) {
 			}
 		case "[GKEY]":
 			crypted, _ := Cryptor.Encrypt_b64(string(action_group))
-			mess := hub.NewMessage(nil, c.CType, c, crypted)
+			mess := NewMessage(nil, c.CType, c, crypted)
 			zeHub.Unicast <- mess
 		default:
 			// mess := hub.NewMessage(nil, c.CType, c, []byte(fmt.Sprintf("%s:?", cmd_group)))

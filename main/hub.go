@@ -1,4 +1,4 @@
-package hub
+package main
 
 import (
 	"encoding/json"
@@ -26,7 +26,7 @@ var CTYpeName = [4]string{"Incomming", "Users", "Servers", "Monitors"}
 // 	ReadWrite = 3
 // )
 
-type CallToAction func(*Client, []byte)
+type CallToActionFunc func(*Client, []byte)
 
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
@@ -34,7 +34,7 @@ type Client struct {
 	Send         chan []byte
 	Enqueue      chan []byte
 	Quit         chan bool
-	CallToAction CallToAction
+	CallToAction CallToActionFunc
 
 	Addr       string
 	CType      int

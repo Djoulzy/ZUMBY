@@ -1,4 +1,4 @@
-package world
+package main
 
 func (W *WORLD) inventoryAdd(infos INVENTORY) {
 	item, _ := W.UserList.Get(infos.Owner)

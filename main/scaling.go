@@ -1,20 +1,17 @@
-package scaling
+package main
 
 import (
 	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/Djoulzy/ZUMBY/hub"
-	"github.com/Djoulzy/ZUMBY/monitoring"
-	"github.com/Djoulzy/ZUMBY/nettools/tcpserver"
 	"github.com/Djoulzy/Tools/clog"
 )
 
 var serverCheckPeriod = 10 * time.Second
 
 type NearbyServer struct {
-	hubclient   *hub.Client
+	hubclient   *Client
 	distantName string
 	connected   bool
 	cpuload     int
@@ -25,11 +22,11 @@ type NearbyServer struct {
 
 type ServersList struct {
 	nodes           map[string]*NearbyServer
-	tcpmanager      *tcpserver.Manager
+	tcpmanager      *TCPManager
 	localName       string
 	localAddr       string
 	MaxServersConns int
-	Hub             *hub.Hub
+	Hub             *Hub
 }
 
 func (slist *ServersList) UpdateMetrics(addr string, message []byte) {
@@ -38,7 +35,7 @@ func (slist *ServersList) UpdateMetrics(addr string, message []byte) {
 	if len(h.Monitors)+len(h.Servers) > 0 {
 		clog.Debug("Scaling", "updateMetrics", "Update Metrics for %s", serv.tcpaddr)
 
-		var metrics monitoring.ServerMetrics
+		var metrics ServerMetrics
 
 		err := json.Unmarshal(message, &metrics)
 		if err != nil {
@@ -53,15 +50,15 @@ func (slist *ServersList) UpdateMetrics(addr string, message []byte) {
 			slist.AddNewPotentialServer(name, infos.Tcpaddr)
 		}
 
-		newSrv := make(map[string]monitoring.Brother)
-		newSrv[metrics.SID] = monitoring.Brother{
+		newSrv := make(map[string]Brother)
+		newSrv[metrics.SID] = Brother{
 			Httpaddr: metrics.HTTPADDR,
 			Tcpaddr:  metrics.TCPADDR,
 		}
-		monitoring.AddBrother <- newSrv
+		AddBrother <- newSrv
 
 		if len(h.Monitors) > 0 {
-			mess := hub.NewMessage(nil, hub.ClientMonitor, nil, message)
+			mess := NewMessage(nil, ClientMonitor, nil, message)
 			h.Broadcast <- mess
 		}
 	}
@@ -85,7 +82,7 @@ func (slist *ServersList) checkingNewServers() {
 	// }
 }
 
-func (slist *ServersList) AddNewConnectedServer(c *hub.Client) {
+func (slist *ServersList) AddNewConnectedServer(c *Client) {
 	clog.Info("Scaling", "AddNewConnectedServer", "Commit of server %s to scaling procedure.", c.Name)
 	slist.nodes[c.Addr] = &NearbyServer{
 		// manager: &tcpserver.Manager{
@@ -119,7 +116,7 @@ func (slist *ServersList) AddNewPotentialServer(name string, addr string) {
 	}
 }
 
-func Init(conf *tcpserver.Manager, list *map[string]string) *ServersList {
+func ScaleInit(conf *TCPManager, list *map[string]string) *ServersList {
 	slist := &ServersList{
 		nodes:           make(map[string]*NearbyServer),
 		tcpmanager:      conf,
@@ -137,7 +134,7 @@ func Init(conf *tcpserver.Manager, list *map[string]string) *ServersList {
 	return slist
 }
 
-func (slist *ServersList) RedirectConnection(client *hub.Client) bool {
+func (slist *ServersList) RedirectConnection(client *Client) bool {
 	for _, node := range slist.nodes {
 		if node.connected {
 			clog.Trace("Scaling", "RedirectConnection", "Server %s CPU: %d Slots: %d", node.hubclient.Name, node.cpuload, node.freeslots)
@@ -154,13 +151,13 @@ func (slist *ServersList) RedirectConnection(client *hub.Client) bool {
 	return false
 }
 
-func (slist *ServersList) DispatchNewConnection(h *hub.Hub, name string) {
+func (slist *ServersList) DispatchNewConnection(h *Hub, name string) {
 	message := []byte(fmt.Sprintf("[KILL]%s", name))
-	mess := hub.NewMessage(nil, hub.ClientServer, nil, message)
+	mess := NewMessage(nil, ClientServer, nil, message)
 	h.Broadcast <- mess
 }
 
-func (slist *ServersList) Start() {
+func (slist *ServersList) ScaleStart() {
 	ticker := time.NewTicker(serverCheckPeriod)
 	defer ticker.Stop()
 

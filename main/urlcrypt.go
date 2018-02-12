@@ -1,4 +1,4 @@
-package urlcrypt
+package main
 
 import (
 	"bytes"

@@ -5,29 +5,17 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/Djoulzy/ZUMBY/hub"
-	"github.com/Djoulzy/ZUMBY/nettools/httpserver"
-	"github.com/Djoulzy/ZUMBY/nettools/scaling"
-	"github.com/Djoulzy/ZUMBY/nettools/tcpserver"
-	"github.com/Djoulzy/ZUMBY/urlcrypt"
-	"github.com/Djoulzy/ZUMBY/world"
-
 	"github.com/Djoulzy/Tools/clog"
 	"github.com/Djoulzy/Tools/config"
-
-	"github.com/Djoulzy/ZUMBY/monitoring"
 )
 
-var Cryptor *urlcrypt.Cypher
-
-var HTTPManager httpserver.Manager
-var TCPManager tcpserver.Manager
-var ScaleList *scaling.ServersList
+var Cryptor *Cypher
+var ScaleList *ServersList
 
 // var Storage *storage.Driver
 
-var zeWorld *world.WORLD
-var zeHub *hub.Hub
+var zeWorld *WORLD
+var zeHub *Hub
 
 func setMaxProcs(nb int) {
 	var procs int
@@ -84,7 +72,7 @@ func main() {
 		clog.Warn("server", "main", "Setting MaxUser to %d.", conf.MaxUsersConns)
 	}
 
-	Cryptor = &urlcrypt.Cypher{
+	Cryptor = &Cypher{
 		HASH_SIZE: conf.HASH_SIZE,
 		HEX_KEY:   []byte(conf.HEX_KEY),
 		HEX_IV:    []byte(conf.HEX_IV),
@@ -94,11 +82,11 @@ func main() {
 
 	///////////////////////////////////////////////////////////////////////////
 
-	zeHub = hub.NewHub()
-	zeWorld = world.Init(zeHub, conf_json)
+	zeHub = NewHub()
+	zeWorld = WorldInit(zeHub, conf_json)
 	clog.ServiceCallback = zeWorld.SendServerMassage
 
-	mon_params := &monitoring.Params{
+	mon_params := &MonParams{
 		ServerID:          conf.Name,
 		Httpaddr:          conf.HTTPaddr,
 		Tcpaddr:           conf.TCPaddr,
@@ -107,9 +95,9 @@ func main() {
 		MaxServersConns:   conf.MaxServersConns,
 		MaxIncommingConns: conf.MaxIncommingConns,
 	}
-	go monitoring.Start(zeHub, mon_params)
+	go MonStart(zeHub, mon_params)
 
-	tcp_params := &tcpserver.Manager{
+	tcp_params := &TCPManager{
 		ServerName:               conf.Name,
 		Tcpaddr:                  conf.TCPaddr,
 		Hub:                      zeHub,
@@ -121,11 +109,11 @@ func main() {
 		Cryptor:                  Cryptor,
 	}
 
-	ScaleList = scaling.Init(tcp_params, &conf.KnownBrothers.Servers)
-	go ScaleList.Start()
+	ScaleList = ScaleInit(tcp_params, &conf.KnownBrothers.Servers)
+	go ScaleList.ScaleStart()
 	// go scaling.Start(ScalingServers)
 
-	http_params := &httpserver.Manager{
+	http_params := &HTTPManager{
 		ServerName:       conf.Name,
 		Httpaddr:         conf.HTTPaddr,
 		Hub:              zeHub,
@@ -143,10 +131,10 @@ func main() {
 		WorldHeight:      conf.AOIHeight,
 	}
 	clog.Output("HTTP Server starting listening on %s", conf.HTTPaddr)
-	go HTTPManager.Start(http_params)
+	go http_params.Start(http_params)
 
 	clog.Output("TCP Server starting listening on %s", conf.TCPaddr)
-	go TCPManager.Start(tcp_params)
+	go tcp_params.Start(tcp_params)
 
 	go zeWorld.Run()
 	zeHub.Run()
