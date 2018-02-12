@@ -22,7 +22,6 @@ type nearbyServer struct {
 
 type serversList struct {
 	nodes           map[string]*nearbyServer
-	tcpmanager      *tcpManager
 	localName       string
 	localAddr       string
 	MaxServersConns int
@@ -116,14 +115,12 @@ func (slist *serversList) addNewPotentialServer(name string, addr string) {
 	}
 }
 
-func scaleInit(conf *tcpManager, list *map[string]string) *serversList {
+func scaleInit(list *map[string]string) *serversList {
 	slist := &serversList{
 		nodes:           make(map[string]*nearbyServer),
-		tcpmanager:      conf,
-		localName:       conf.ServerName,
-		localAddr:       conf.Tcpaddr,
+		localName:       conf.Name,
+		localAddr:       conf.TCPaddr,
 		MaxServersConns: conf.MaxServersConns,
-		hubManager:      conf.hubManager,
 	}
 
 	if list != nil {

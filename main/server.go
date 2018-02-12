@@ -9,16 +9,13 @@ import (
 	"github.com/Djoulzy/Tools/config"
 )
 
-// Cryptor données de cryptage
 var cryptor *cypher
-
-// ScaleList Liste des serveur voisins
 var scaleList *serversList
 
 // var Storage *storage.Driver
 
 var zeWorld *world
-var zehubManager *hubManager
+var zehub *hubManager
 
 func setMaxProcs(nb int) {
 	var procs int
@@ -85,60 +82,22 @@ func main() {
 
 	///////////////////////////////////////////////////////////////////////////
 
-	zehubManager = newhubManager()
-	zeWorld = worldInit(zehubManager, confJSON)
+	zehub = newhubManager()
+	zeWorld = worldInit(zehub, confJSON)
 	clog.ServiceCallback = zeWorld.sendServerMassage
 
-	monParams := &monParams{
-		ServerID:          conf.Name,
-		Httpaddr:          conf.HTTPaddr,
-		Tcpaddr:           conf.TCPaddr,
-		MaxUsersConns:     conf.MaxUsersConns,
-		MaxMonitorsConns:  conf.MaxMonitorsConns,
-		MaxServersConns:   conf.MaxServersConns,
-		MaxIncommingConns: conf.MaxIncommingConns,
-	}
-	go monStart(zehubManager, monParams)
+	go monStart()
 
-	tcpParams := &tcpManager{
-		ServerName:               conf.Name,
-		Tcpaddr:                  conf.TCPaddr,
-		hubManager:               zehubManager,
-		ConnectTimeOut:           conf.ConnectTimeOut,
-		WriteTimeOut:             conf.WriteTimeOut,
-		ScalingCheckServerPeriod: conf.ScalingCheckServerPeriod,
-		MaxServersConns:          conf.MaxServersConns,
-		CallToAction:             CallToAction,
-		Cryptor:                  cryptor,
-	}
-
-	scaleList = scaleInit(tcpParams, &conf.KnownBrothers.Servers)
+	scaleList = scaleInit(&conf.KnownBrothers.Servers)
 	go scaleList.scaleStart()
 	// go scaling.Start(ScalingServers)
 
-	httpParams := &HTTPManager{
-		ServerName:          conf.Name,
-		Httpaddr:            conf.HTTPaddr,
-		hubManager:          zehubManager,
-		ReadBufferSize:      conf.ReadBufferSize,
-		WriteBufferSize:     conf.WriteBufferSize,
-		HandshakeTimeout:    conf.HandshakeTimeout,
-		NBAcceptBySecond:    conf.NBAcceptBySecond,
-		CallToAction:        CallToAction,
-		Cryptor:             cryptor,
-		MapGenCallback:      zeWorld.getMapArea,
-		hubClientDisconnect: zeWorld.dropUser,
-		GetTilesList:        zeWorld.getTilesList,
-		GetMapImg:           zeWorld.getMapImg,
-		WorldWidth:          conf.AOIWidth,
-		WorldHeight:         conf.AOIHeight,
-	}
 	clog.Output("HTTP Server starting listening on %s", conf.HTTPaddr)
-	go httpParams.HTTPStart(httpParams)
+	go httpStart()
 
 	clog.Output("TCP Server starting listening on %s", conf.TCPaddr)
-	go tcpParams.TCPStart(tcpParams)
+	go tcpStart()
 
 	go zeWorld.run()
-	zehubManager.run()
+	zehub.run()
 }

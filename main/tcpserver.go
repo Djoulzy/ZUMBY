@@ -12,19 +12,7 @@ import (
 	"github.com/Djoulzy/Tools/clog"
 )
 
-type tcpManager struct {
-	Tcpaddr                  string
-	ServerName               string
-	hubManager               *hubManager
-	MaxServersConns          int
-	ConnectTimeOut           int
-	WriteTimeOut             int
-	ScalingCheckServerPeriod int
-	CallToAction             func(*hubClient, []byte)
-	Cryptor                  *cypher
-}
-
-func (m *tcpManager) reader(conn *net.TCPConn, cli *hubClient) {
+func tcpReader(conn *net.TCPConn, cli *hubClient) {
 	defer func() {
 		conn.Close()
 	}()
@@ -45,11 +33,11 @@ func (m *tcpManager) reader(conn *net.TCPConn, cli *hubClient) {
 		// }
 		// message = message[:long-1]
 		// spew.Dump(message)
-		go m.CallToAction(cli, message)
+		go callToAction(cli, message)
 	}
 }
 
-func (m *tcpManager) writer(conn *net.TCPConn, cli *hubClient) {
+func tcpWriter(conn *net.TCPConn, cli *hubClient) {
 	defer func() {
 		conn.Close()
 	}()
@@ -83,8 +71,8 @@ func (m *tcpManager) writer(conn *net.TCPConn, cli *hubClient) {
 // 	return ip[0]
 // }
 
-func (m *tcpManager) Connect(addr string) (*net.TCPConn, error) {
-	conn, err := net.DialTimeout("tcp", addr, time.Second*time.Duration(m.ConnectTimeOut))
+func tcpConnect(addr string) (*net.TCPConn, error) {
+	conn, err := net.DialTimeout("tcp", addr, time.Second*time.Duration(conf.ConnectTimeOut))
 	// addr, _ := net.ResolveTCPAddr("tcp", m.Tcpaddr)
 	// conn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
@@ -94,49 +82,47 @@ func (m *tcpManager) Connect(addr string) (*net.TCPConn, error) {
 	return conn.(*net.TCPConn), err
 }
 
-func (m *tcpManager) newhubClient(addr string, name string) *hubClient {
+func newhubClient(addr string, name string) *hubClient {
 	client := &hubClient{Quit: make(chan bool),
-		CType: clientUndefined, Send: make(chan []byte, 256), CallToAction: m.CallToAction, Addr: addr,
+		CType: clientUndefined, Send: make(chan []byte, 256), Addr: addr,
 		Name: name, AppID: "", Country: "", UserAgent: "TCP Socket"}
-	m.hubManager.Register <- client
+	zehub.Register <- client
 	// <-client.Consistent
 	return client
 }
 
-func (m *tcpManager) NewOutgoingConn(conn *net.TCPConn, toName string, wg *sync.WaitGroup) {
+func newOutgoingTCPConn(conn *net.TCPConn, toName string, wg *sync.WaitGroup) {
 	clog.Debug("TCPserver", "NewOutgoingConn", "Contacting %s", conn.RemoteAddr().String())
-	client := m.newhubClient(conn.RemoteAddr().String(), toName)
-	handShake, _ := m.Cryptor.encryptB64(fmt.Sprintf("%s|%s|SERV", m.ServerName, m.Tcpaddr))
+	client := newhubClient(conn.RemoteAddr().String(), toName)
+	handShake, _ := cryptor.encryptB64(fmt.Sprintf("%s|%s|SERV", conf.Name, conf.TCPaddr))
 	mess := newDatamessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
-	m.hubManager.Unicast <- mess
+	zehub.Unicast <- mess
 
-	go m.writer(conn, client)
+	go tcpWriter(conn, client)
 	(*wg).Done()
-	m.reader(conn, client)
-	m.hubManager.Unregister <- client
+	tcpReader(conn, client)
+	zehub.Unregister <- client
 	// <-client.Consistent
 }
 
-func (m *tcpManager) NewIncommingConn(conn *net.TCPConn, wg *sync.WaitGroup) {
-	client := m.newhubClient(conn.RemoteAddr().String(), conn.RemoteAddr().String())
-	handShake, _ := m.Cryptor.encryptB64(fmt.Sprintf("%s|%s|SERV", m.ServerName, m.Tcpaddr))
+func newIncommingTCPConn(conn *net.TCPConn, wg *sync.WaitGroup) {
+	client := newhubClient(conn.RemoteAddr().String(), conn.RemoteAddr().String())
+	handShake, _ := cryptor.encryptB64(fmt.Sprintf("%s|%s|SERV", conf.Name, conf.TCPaddr))
 	mess := newDatamessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
-	m.hubManager.Unicast <- mess
+	zehub.Unicast <- mess
 
-	go m.writer(conn, client)
+	go tcpWriter(conn, client)
 	(*wg).Done()
-	m.reader(conn, client)
-	m.hubManager.Unregister <- client
+	tcpReader(conn, client)
+	zehub.Unregister <- client
 	// <-client.Consistent
 }
 
 // TCPStart lance le server TCP
-func (m *tcpManager) TCPStart(conf *tcpManager) {
+func tcpStart() {
 	var wg sync.WaitGroup
 
-	m = conf
-
-	formatedaddr, _ := net.ResolveTCPAddr("tcp", m.Tcpaddr)
+	formatedaddr, _ := net.ResolveTCPAddr("tcp", conf.TCPaddr)
 	ln, err := net.ListenTCP("tcp", formatedaddr)
 	if err != nil {
 		clog.Error("TCPserver", "Start", "%s", err)
@@ -148,7 +134,7 @@ func (m *tcpManager) TCPStart(conf *tcpManager) {
 			// handle error
 		}
 		wg.Add(1)
-		go m.NewIncommingConn(conn, &wg)
+		go newIncommingTCPConn(conn, &wg)
 		wg.Wait()
 	}
 }

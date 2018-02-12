@@ -10,9 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/websocket"
-
 	"github.com/Djoulzy/Tools/clog"
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -24,27 +23,8 @@ const (
 
 var upgrader *websocket.Upgrader
 
-// HTTPManager gestionnaire de connection HTTP
-type HTTPManager struct {
-	Httpaddr            string
-	ServerName          string
-	hubManager          *hubManager
-	ReadBufferSize      int
-	WriteBufferSize     int
-	NBAcceptBySecond    int
-	HandshakeTimeout    int
-	CallToAction        func(*hubClient, []byte)
-	Cryptor             *cypher
-	MapGenCallback      func(x, y int) []byte
-	GetTilesList        func() []byte
-	GetMapImg           func(x, y int) string
-	hubClientDisconnect func(string)
-	WorldWidth          int
-	WorldHeight         int
-}
-
-func (m *HTTPManager) statusPage(w http.ResponseWriter, r *http.Request) {
-	handShake, _ := m.Cryptor.encryptB64("MNTR|Monitoring|MNTR")
+func statusPage(w http.ResponseWriter, r *http.Request) {
+	handShake, _ := cryptor.encryptB64("MNTR|Monitoring|MNTR")
 	var data = struct {
 		Host   string
 		Nb     int
@@ -52,9 +32,9 @@ func (m *HTTPManager) statusPage(w http.ResponseWriter, r *http.Request) {
 		Stats  string
 		HShake string
 	}{
-		m.Httpaddr,
-		len(m.hubManager.Users),
-		m.hubManager.Users,
+		conf.HTTPaddr,
+		len(zehub.Users),
+		zehub.Users,
 		machineLoad.String(),
 		string(handShake),
 	}
@@ -69,14 +49,14 @@ func (m *HTTPManager) statusPage(w http.ResponseWriter, r *http.Request) {
 	homeTempl.Execute(w, &data)
 }
 
-func (m *HTTPManager) testPage(w http.ResponseWriter, r *http.Request) {
-	handShake, _ := m.Cryptor.encryptB64("LOAD_1|TestPage|USER")
+func testPage(w http.ResponseWriter, r *http.Request) {
+	handShake, _ := cryptor.encryptB64("LOAD_1|TestPage|USER")
 
 	var data = struct {
 		Host   string
 		HShake string
 	}{
-		m.Httpaddr,
+		conf.HTTPaddr,
 		string(handShake),
 	}
 
@@ -88,8 +68,8 @@ func (m *HTTPManager) testPage(w http.ResponseWriter, r *http.Request) {
 	homeTempl.Execute(w, &data)
 }
 
-func (m *HTTPManager) connect() *websocket.Conn {
-	u := url.URL{Scheme: "ws", Host: m.Httpaddr, Path: "/ws"}
+func httpConnect() *websocket.Conn {
+	u := url.URL{Scheme: "ws", Host: conf.HTTPaddr, Path: "/ws"}
 	clog.Info("HTTPServer", "Connect", "Connecting to %s", u.String())
 
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
@@ -101,10 +81,10 @@ func (m *HTTPManager) connect() *websocket.Conn {
 	return conn
 }
 
-func (m *HTTPManager) reader(conn *websocket.Conn, cli *hubClient) {
+func httpReader(conn *websocket.Conn, cli *hubClient) {
 	defer func() {
-		m.hubClientDisconnect(cli.Name)
-		m.hubManager.Unregister <- cli
+		zeWorld.dropUser(cli.Name)
+		zehub.Unregister <- cli
 		conn.Close()
 	}()
 	conn.SetReadLimit(maxdataMessageSize)
@@ -123,16 +103,16 @@ func (m *HTTPManager) reader(conn *websocket.Conn, cli *hubClient) {
 			return
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newLine, spaceChar, -1))
-		go m.CallToAction(cli, message)
+		go callToAction(cli, message)
 	}
 }
 
-func (m *HTTPManager) _write(ws *websocket.Conn, mt int, message []byte) error {
+func _httpWriter(ws *websocket.Conn, mt int, message []byte) error {
 	ws.SetWriteDeadline(time.Now().Add(writeWait))
 	return ws.WriteMessage(mt, message)
 }
 
-func (m *HTTPManager) writer(conn *websocket.Conn, cli *hubClient) {
+func httpWriter(conn *websocket.Conn, cli *hubClient) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -145,23 +125,23 @@ func (m *HTTPManager) writer(conn *websocket.Conn, cli *hubClient) {
 			if !ok {
 				clog.Warn("HTTPServer", "Writer", "Error: %s", ok)
 				cm := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "Something went wrong !")
-				if err := m._write(conn, websocket.CloseMessage, cm); err != nil {
+				if err := _httpWriter(conn, websocket.CloseMessage, cm); err != nil {
 					clog.Error("HTTPServer", "Writer", "Connection lost ! Cannot send ClosedataMessage to %s", cli.Name)
 				}
 				return
 			}
 			// clog.Debug("HTTPServer", "Writer", "Sending: %s", message)
-			if err := m._write(conn, websocket.TextMessage, message); err != nil {
+			if err := _httpWriter(conn, websocket.TextMessage, message); err != nil {
 				return
 			}
 		case <-ticker.C:
 			clog.Debug("HTTPServer", "Writer", "hubClient %s Ping!", cli.Name)
-			if err := m._write(conn, websocket.PingMessage, []byte{}); err != nil {
+			if err := _httpWriter(conn, websocket.PingMessage, []byte{}); err != nil {
 				return
 			}
 		case <-cli.Quit:
 			cm := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "An other device is using your account !")
-			if err := m._write(conn, websocket.CloseMessage, cm); err != nil {
+			if err := _httpWriter(conn, websocket.CloseMessage, cm); err != nil {
 				clog.Error("HTTPServer", "Writer", "Cannot write ClosedataMessage to %s", cli.Name)
 			}
 			return
@@ -170,7 +150,7 @@ func (m *HTTPManager) writer(conn *websocket.Conn, cli *hubClient) {
 }
 
 // serveWs handles websocket requests from the peer.
-func (m *HTTPManager) wsConnect(w http.ResponseWriter, r *http.Request) {
+func wsConnect(w http.ResponseWriter, r *http.Request) {
 	var ua string
 	name := r.Header["Sec-Websocket-Key"][0]
 	if len(r.Header["User-Agent"]) > 0 {
@@ -179,7 +159,7 @@ func (m *HTTPManager) wsConnect(w http.ResponseWriter, r *http.Request) {
 		ua = "n/a"
 	}
 
-	if m.hubManager.userExists(name, clientUser) {
+	if zehub.userExists(name, clientUser) {
 		clog.Warn("HTTPServer", "wsConnect", "hubClient %s already exists ... Refusing connection", name)
 		return
 	}
@@ -193,12 +173,12 @@ func (m *HTTPManager) wsConnect(w http.ResponseWriter, r *http.Request) {
 
 	client := &hubClient{Quit: make(chan bool),
 		CType: clientUndefined, Send: make(chan []byte, 256), Enqueue: make(chan []byte, 256),
-		CallToAction: m.CallToAction, Addr: httpconn.RemoteAddr().String(),
+		Addr: httpconn.RemoteAddr().String(),
 		Name: name, AppID: "", Country: "", UserAgent: ua}
 
-	m.hubManager.Register <- client
-	go m.writer(httpconn, client)
-	go m.reader(httpconn, client)
+	zehub.Register <- client
+	go httpWriter(httpconn, client)
+	go httpReader(httpconn, client)
 }
 
 func throttlehubClients(h http.Handler, n int) http.Handler {
@@ -213,7 +193,7 @@ func throttlehubClients(h http.Handler, n int) http.Handler {
 	})
 }
 
-func (m *HTTPManager) dataServe(w http.ResponseWriter, r *http.Request) {
+func dataServe(w http.ResponseWriter, r *http.Request) {
 	name := ".." + r.URL.Path
 	file, err := os.Open(name)
 	if err != nil {
@@ -228,7 +208,7 @@ func (m *HTTPManager) dataServe(w http.ResponseWriter, r *http.Request) {
 	// w.Write(mapJSON)
 }
 
-func (m *HTTPManager) getGameData(w http.ResponseWriter, r *http.Request) {
+func getGameData(w http.ResponseWriter, r *http.Request) {
 	var str []byte
 	query := strings.Split(string(r.URL.Path[1:]), "/")
 
@@ -236,7 +216,7 @@ func (m *HTTPManager) getGameData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if query[1] == "TilesList.json" {
-		str = m.GetTilesList()
+		str = zeWorld.getTilesList()
 	} else {
 		str = []byte("")
 	}
@@ -244,7 +224,7 @@ func (m *HTTPManager) getGameData(w http.ResponseWriter, r *http.Request) {
 	w.Write(str)
 }
 
-func (m *HTTPManager) getMapArea(w http.ResponseWriter, r *http.Request) {
+func getMapArea(w http.ResponseWriter, r *http.Request) {
 	query := strings.Split(string(r.URL.Path[1:]), "/")
 	coord := strings.Split(query[1], "_")
 
@@ -253,30 +233,29 @@ func (m *HTTPManager) getMapArea(w http.ResponseWriter, r *http.Request) {
 
 	x, _ := strconv.Atoi(coord[0])
 	y, _ := strconv.Atoi(coord[1])
-	str := m.MapGenCallback(x, y)
+	str := zeWorld.getMapArea(x, y)
 	w.Write(str)
 }
 
-func (m *HTTPManager) getMonPage(w http.ResponseWriter, r *http.Request) {
+func getMonPage(w http.ResponseWriter, r *http.Request) {
 	query := strings.Split(string(r.URL.Path[1:]), "/")
 	coord := strings.Split(query[1], "_")
 
 	if len(coord) == 2 {
 		x, _ := strconv.Atoi(coord[0])
 		y, _ := strconv.Atoi(coord[1])
-		page := m.GetMapImg(x, y)
+		page := zeWorld.getMapImg(x, y)
 		w.Write([]byte(page))
 	} else {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "text/html")
-		m.GetMapImg(-1, -1)
+		zeWorld.getMapImg(-1, -1)
 		http.ServeFile(w, r, "../public/mon.html")
 	}
 }
 
 // HTTPStart lance le serveur HTTP
-func (m *HTTPManager) HTTPStart(conf *HTTPManager) {
-	m = conf
+func httpStart() {
 
 	// myHttp := &http.Server{
 	// 	Addr:           ":8080",
@@ -292,23 +271,23 @@ func (m *HTTPManager) HTTPStart(conf *HTTPManager) {
 		Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
 			clog.Error("httpserver", "Start", "Error %s", reason)
 		},
-		ReadBufferSize:   m.ReadBufferSize,
-		WriteBufferSize:  m.WriteBufferSize,
-		HandshakeTimeout: time.Duration(m.HandshakeTimeout) * time.Second,
+		ReadBufferSize:   conf.ReadBufferSize,
+		WriteBufferSize:  conf.WriteBufferSize,
+		HandshakeTimeout: time.Duration(conf.HandshakeTimeout) * time.Second,
 	} // use default options
 
 	fs := http.FileServer(http.Dir("../public/"))
 	http.Handle("/client/", http.StripPrefix("/client/", fs))
 
-	http.HandleFunc("/data/", m.dataServe)
-	http.HandleFunc("/test", m.testPage)
-	http.HandleFunc("/status", m.statusPage)
-	http.HandleFunc("/map/", m.getMapArea)
-	http.HandleFunc("/GameData/", m.getGameData)
-	http.HandleFunc("/mon/", m.getMonPage)
+	http.HandleFunc("/data/", dataServe)
+	http.HandleFunc("/test", testPage)
+	http.HandleFunc("/status", statusPage)
+	http.HandleFunc("/map/", getMapArea)
+	http.HandleFunc("/GameData/", getGameData)
+	http.HandleFunc("/mon/", getMonPage)
 
-	handler := http.HandlerFunc(m.wsConnect)
-	http.Handle("/ws", throttlehubClients(handler, m.NBAcceptBySecond))
+	handler := http.HandlerFunc(wsConnect)
+	http.Handle("/ws", throttlehubClients(handler, conf.NBAcceptBySecond))
 
-	clog.Fatal("httpserver", "Start", http.ListenAndServe(m.Httpaddr, nil))
+	clog.Fatal("httpserver", "Start", http.ListenAndServe(conf.HTTPaddr, nil))
 }

@@ -92,7 +92,7 @@ func addToBrothersList(srv map[string]brother) {
 	}
 }
 
-func loadAverage(h *hubManager, p *monParams) {
+func monStart() {
 	ticker := time.NewTicker(statsTimer)
 	machineLoad = &load.AvgStat{Load1: 0, Load5: 0, Load15: 0}
 	nbcpu, _ := cpu.Counts(true)
@@ -115,10 +115,10 @@ func loadAverage(h *hubManager, p *monParams) {
 			upTime = time.Since(startTime)
 
 			newStats := serverMetrics{
-				SID:      p.ServerID,
-				TCPADDR:  p.Tcpaddr,
-				HTTPADDR: p.Httpaddr,
-				HOST:     fmt.Sprintf("HTTP: %s - TCP: %s", p.Httpaddr, p.Tcpaddr),
+				SID:      conf.Name,
+				TCPADDR:  conf.TCPaddr,
+				HTTPADDR: conf.HTTPaddr,
+				HOST:     fmt.Sprintf("HTTP: %s - TCP: %s", conf.HTTPaddr, conf.TCPaddr),
 				CPU:      nbcpu,
 				GORTNE:   runtime.NumGoroutine(),
 				STTME:    startTime.Format("02/01/2006 15:04:05"),
@@ -127,15 +127,15 @@ func loadAverage(h *hubManager, p *monParams) {
 				LAVG:     loadIndice,
 				MEM:      getMemUsage(),
 				SWAP:     getSwapUsage(),
-				NBMESS:   h.SentMessByTicks,
-				NBI:      len(h.Incomming),
-				MXI:      p.MaxIncommingConns,
-				NBU:      len(h.Users),
-				MXU:      p.MaxUsersConns,
-				NBM:      len(h.Monitors),
-				MXM:      p.MaxMonitorsConns,
-				NBS:      len(h.Servers),
-				MXS:      p.MaxServersConns,
+				NBMESS:   zehub.SentMessByTicks,
+				NBI:      len(zehub.Incomming),
+				MXI:      conf.MaxIncommingConns,
+				NBU:      len(zehub.Users),
+				MXU:      conf.MaxUsersConns,
+				NBM:      len(zehub.Monitors),
+				MXM:      conf.MaxMonitorsConns,
+				NBS:      len(zehub.Servers),
+				MXS:      conf.MaxServersConns,
 				BRTHLST:  brotherlist,
 			}
 
@@ -148,21 +148,16 @@ func loadAverage(h *hubManager, p *monParams) {
 			if err != nil {
 				clog.Error("Monitoring", "LoadAverage", "MON: Cannot send server metrics to listeners ...")
 			} else {
-				if len(h.Monitors)+len(h.Servers) > 0 {
-					h.SentMessByTicks = 0
+				if len(zehub.Monitors)+len(zehub.Servers) > 0 {
+					zehub.SentMessByTicks = 0
 					mess := newDatamessage(nil, clientMonitor, nil, json)
-					h.Broadcast <- mess
+					zehub.Broadcast <- mess
 					mess = newDatamessage(nil, clientServer, nil, append([]byte("[MNIT]"), json...))
-					h.Broadcast <- mess
+					zehub.Broadcast <- mess
 					mess = newDatamessage(nil, clientUser, nil, append([]byte("[FLBK]"), brthJSON...))
-					h.Broadcast <- mess
+					zehub.Broadcast <- mess
 				}
 			}
 		}
 	}
-}
-
-func monStart(hub *hubManager, p *monParams) {
-	// addToBrothersList(list)
-	loadAverage(hub, p)
 }
