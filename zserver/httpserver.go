@@ -116,7 +116,7 @@ func httpWriter(conn *websocket.Conn, cli *hubClient) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		// conn.Close()
+		conn.Close()
 	}()
 
 	for {
