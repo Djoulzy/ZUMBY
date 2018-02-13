@@ -82,11 +82,11 @@ func httpConnect() *websocket.Conn {
 }
 
 func httpReader(conn *websocket.Conn, cli *hubClient) {
-	// defer func() {
-	// 	zeWorld.dropUser(cli.Name)
-	// 	zehub.Unregister <- cli
-	// 	conn.Close()
-	// }()
+	defer func() {
+		// zeWorld.dropUser(cli.Name)
+		// zehub.Unregister <- cli
+		conn.Close()
+	}()
 	conn.SetReadLimit(maxdataMessageSize)
 	conn.SetReadDeadline(time.Now().Add(pongWait))
 	conn.SetPongHandler(func(string) error {
@@ -183,7 +183,7 @@ func wsConnect(w http.ResponseWriter, r *http.Request) {
 
 	zeWorld.dropUser(client.Name)
 	client.Addr = ""
-	httpconn.Close()
+	// httpconn.Close()
 	zehub.Unregister <- client
 }
 
