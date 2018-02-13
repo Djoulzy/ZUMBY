@@ -191,46 +191,46 @@ func (W *world) dropUser(id string) {
 
 // LogUser enregistre un joueur dans l'AOI
 func (W *world) logUser(c *hubClient) ([]byte, error) {
-	// var infos *user
-	// dat, err := LoadUser(c.Name)
-	// if err != nil {
-	// 	infos = &user{
-	// 		entity: entity{
-	// 			ID: c.Name, Type: "P", Face: "h1", Dir: "down",
-	// 		},
-	// 		attributes: attributes{
-	// 			PV: 15, Starv: 15, Thirst: 15,
-	// 		},
-	// 		Inventory: make([]item, 10),
-	// 	}
-	// 	infos.X, infos.Y = W.findSpawnPlace()
-	// 	dat, err = json.Marshal(infos)
-	// 	if err != nil {
-	// 		clog.Error("World", "logUser", "Cant create user %s", err)
-	// 		return dat, err
-	// 	}
-	// 	SaveUser(c.Name, dat)
-	// 	clog.Warn("World", "logUser", "Creating new user %s", dat)
-	// } else {
-	// 	err := json.Unmarshal(dat, &infos)
-	// 	if err != nil || infos == nil {
-	// 		clog.Error("World", "logUser", "Corrupted data for user %s : %s", c.Name, err)
-	// 		return dat, errors.New("ko")
-	// 	}
-	// 	clog.Info("World", "logUser", "Registering user %s", infos.ID)
-	// }
+	var infos *user
+	dat, err := LoadUser(c.Name)
+	if err != nil {
+		infos = &user{
+			entity: entity{
+				ID: c.Name, Type: "P", Face: "h1", Dir: "down",
+			},
+			attributes: attributes{
+				PV: 15, Starv: 15, Thirst: 15,
+			},
+			Inventory: make([]item, 10),
+		}
+		infos.X, infos.Y = W.findSpawnPlace()
+		dat, err = json.Marshal(infos)
+		if err != nil {
+			clog.Error("World", "logUser", "Cant create user %s", err)
+			return dat, err
+		}
+		SaveUser(c.Name, dat)
+		clog.Warn("World", "logUser", "Creating new user %s", dat)
+	} else {
+		err := json.Unmarshal(dat, &infos)
+		if err != nil || infos == nil {
+			clog.Error("World", "logUser", "Corrupted data for user %s : %s", c.Name, err)
+			return dat, errors.New("ko")
+		}
+		clog.Info("World", "logUser", "Registering user %s", infos.ID)
+	}
 
-	// infos.hubClient = c
+	infos.hubClient = c
 
-	// message := W.AOIs.getAOIEntities(infos.X, infos.Y)
-	// mess := newDataMessage(nil, clientUser, c, message)
-	// zehub.Unicast <- mess
-	// clog.Service("World", "Run", "%s is now connected...", c.Name)
+	message := W.AOIs.getAOIEntities(infos.X, infos.Y)
+	mess := newDataMessage(nil, clientUser, c, message)
+	zehub.Unicast <- mess
+	clog.Service("World", "Run", "%s is now connected...", c.Name)
 
-	// W.UserList.Set(infos.ID, infos)
-	// W.Map.Entities[infos.X][infos.Y] = infos
-	// W.AOIs.addEntity(infos.X, infos.Y, infos)
-	// return dat, nil
+	W.UserList.Set(infos.ID, infos)
+	W.Map.Entities[infos.X][infos.Y] = infos
+	W.AOIs.addEntity(infos.X, infos.Y, infos)
+	return dat, nil
 }
 
 func (W *world) checkTargetHit(infos *user) {
