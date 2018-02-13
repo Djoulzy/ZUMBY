@@ -83,8 +83,9 @@ func httpConnect() *websocket.Conn {
 
 func httpReader(conn *websocket.Conn, cli *hubClient) {
 	defer func() {
-		// zeWorld.dropUser(cli.Name)
-		// zehub.Unregister <- cli
+		zeWorld.dropUser(cli.Name)
+		cli.Addr = ""
+		zehub.Unregister <- cli
 		conn.Close()
 	}()
 	conn.SetReadLimit(maxdataMessageSize)
@@ -181,10 +182,10 @@ func wsConnect(w http.ResponseWriter, r *http.Request) {
 	go httpWriter(httpconn, client)
 	httpReader(httpconn, client)
 
-	zeWorld.dropUser(client.Name)
-	client.Addr = ""
+	// zeWorld.dropUser(client.Name)
+	// client.Addr = ""
 	// httpconn.Close()
-	zehub.Unregister <- client
+	// zehub.Unregister <- client
 }
 
 func throttlehubClients(h http.Handler, n int) http.Handler {
