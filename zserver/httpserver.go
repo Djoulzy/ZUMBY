@@ -39,7 +39,7 @@ func statusPage(w http.ResponseWriter, r *http.Request) {
 		string(handShake),
 	}
 
-	zeFile := "../public/status.html"
+	zeFile := "public/status.html"
 	clog.Test("HTTPServer", "statusPage", "%s", zeFile)
 	homeTempl, err := template.ParseFiles(zeFile)
 	if err != nil {
@@ -60,7 +60,7 @@ func testPage(w http.ResponseWriter, r *http.Request) {
 		string(handShake),
 	}
 
-	homeTempl, err := template.ParseFiles("../public/client.html")
+	homeTempl, err := template.ParseFiles("public/client.html")
 	if err != nil {
 		clog.Error("HTTPServer", "testPage", "%s", err)
 		return
@@ -250,7 +250,7 @@ func getMonPage(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "text/html")
 		zeWorld.getMapImg(-1, -1)
-		http.ServeFile(w, r, "../public/mon.html")
+		http.ServeFile(w, r, "public/mon.html")
 	}
 }
 
@@ -276,7 +276,7 @@ func httpStart() {
 		HandshakeTimeout: time.Duration(ZConf.HandshakeTimeout) * time.Second,
 	} // use default options
 
-	fs := http.FileServer(http.Dir("../public/"))
+	fs := http.FileServer(http.Dir("public/"))
 	http.Handle("/client/", http.StripPrefix("/client/", fs))
 
 	http.HandleFunc("/data/", dataServe)
