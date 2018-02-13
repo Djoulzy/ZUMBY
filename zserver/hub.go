@@ -172,7 +172,7 @@ func (h *hubManager) unregister(client *hubClient) {
 func (h *hubManager) newRole(modif *connModifier) {
 	if h.userExists(modif.NewName, modif.NewType) {
 		clog.Warn("hubManager", "Newrole", "hubClient already exists ... Deleting")
-		h.unregister(h.gethubClientByName(modif.NewName, modif.NewType))
+		h.Unregister <- h.gethubClientByName(modif.NewName, modif.NewType)
 	}
 	delete(h.FullUsersList[modif.hubClient.CType], modif.hubClient.Name)
 	modif.hubClient.Name = modif.NewName

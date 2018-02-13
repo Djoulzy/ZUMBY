@@ -84,7 +84,7 @@ func httpConnect() *websocket.Conn {
 func httpReader(conn *websocket.Conn, cli *hubClient) {
 	defer func() {
 		zeWorld.dropUser(cli.Name)
-		zehub.unregister(cli)
+		zehub.Unregister <- cli
 		conn.Close()
 	}()
 	conn.SetReadLimit(maxdataMessageSize)
@@ -116,7 +116,7 @@ func httpWriter(conn *websocket.Conn, cli *hubClient) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		conn.Close()
+		// conn.Close()
 	}()
 
 	for {
@@ -177,7 +177,7 @@ func wsConnect(w http.ResponseWriter, r *http.Request) {
 		Addr: httpconn.RemoteAddr().String(),
 		Name: name, AppID: "", Country: "", UserAgent: ua}
 
-	zehub.register(client)
+	zehub.Register <- client
 	go httpWriter(httpconn, client)
 	go httpReader(httpconn, client)
 }
