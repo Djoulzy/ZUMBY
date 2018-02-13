@@ -1,4 +1,4 @@
-package main
+package zserver
 
 import (
 	"fmt"
@@ -62,7 +62,6 @@ type tile struct {
 }
 
 type world struct {
-	hub *hubManager
 	// MobList   map[string]*MOB
 	MobList *cmap.CMap
 	// UserList  map[string]*USER

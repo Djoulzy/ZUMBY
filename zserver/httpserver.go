@@ -1,4 +1,4 @@
-package main
+package zserver
 
 import (
 	"bytes"
@@ -32,7 +32,7 @@ func statusPage(w http.ResponseWriter, r *http.Request) {
 		Stats  string
 		HShake string
 	}{
-		conf.HTTPaddr,
+		ZConf.HTTPaddr,
 		len(zehub.Users),
 		zehub.Users,
 		machineLoad.String(),
@@ -56,7 +56,7 @@ func testPage(w http.ResponseWriter, r *http.Request) {
 		Host   string
 		HShake string
 	}{
-		conf.HTTPaddr,
+		ZConf.HTTPaddr,
 		string(handShake),
 	}
 
@@ -69,7 +69,7 @@ func testPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func httpConnect() *websocket.Conn {
-	u := url.URL{Scheme: "ws", Host: conf.HTTPaddr, Path: "/ws"}
+	u := url.URL{Scheme: "ws", Host: ZConf.HTTPaddr, Path: "/ws"}
 	clog.Info("HTTPServer", "Connect", "Connecting to %s", u.String())
 
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
@@ -271,9 +271,9 @@ func httpStart() {
 		Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
 			clog.Error("httpserver", "Start", "Error %s", reason)
 		},
-		ReadBufferSize:   conf.ReadBufferSize,
-		WriteBufferSize:  conf.WriteBufferSize,
-		HandshakeTimeout: time.Duration(conf.HandshakeTimeout) * time.Second,
+		ReadBufferSize:   ZConf.ReadBufferSize,
+		WriteBufferSize:  ZConf.WriteBufferSize,
+		HandshakeTimeout: time.Duration(ZConf.HandshakeTimeout) * time.Second,
 	} // use default options
 
 	fs := http.FileServer(http.Dir("../public/"))
@@ -287,7 +287,7 @@ func httpStart() {
 	http.HandleFunc("/mon/", getMonPage)
 
 	handler := http.HandlerFunc(wsConnect)
-	http.Handle("/ws", throttlehubClients(handler, conf.NBAcceptBySecond))
+	http.Handle("/ws", throttlehubClients(handler, ZConf.NBAcceptBySecond))
 
-	clog.Fatal("httpserver", "Start", http.ListenAndServe(conf.HTTPaddr, nil))
+	clog.Fatal("httpserver", "Start", http.ListenAndServe(ZConf.HTTPaddr, nil))
 }

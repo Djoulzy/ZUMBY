@@ -1,4 +1,4 @@
-package main
+package zserver
 
 import (
 	"bufio"
@@ -50,7 +50,7 @@ func (W *world) spawnMob() {
 		W.Map.Entities[mob.X][mob.Y] = mob
 		W.MobList.Set(mob.ID, mob)
 		W.AOIs.addEntity(mob.X, mob.Y, mob)
-		clog.Info("world", "spawnMob", "Spawning new mob %s", mob.ID)
+		clog.Debug("world", "spawnMob", "Spawning new mob %s", mob.ID)
 		// mess := hub.NewdataMessage(nil, hub.clientUser, nil, message)
 		// W.hub.Broadcast <- mess
 	}
@@ -223,8 +223,8 @@ func (W *world) logUser(c *hubClient) ([]byte, error) {
 	infos.hubClient = c
 
 	message := W.AOIs.getAOIEntities(infos.X, infos.Y)
-	mess := newDatamessage(nil, clientUser, c, message)
-	W.hub.Unicast <- mess
+	mess := newDataMessage(nil, clientUser, c, message)
+	zehub.Unicast <- mess
 	clog.Service("World", "Run", "%s is now connected...", c.Name)
 
 	W.UserList.Set(infos.ID, infos)
@@ -298,8 +298,8 @@ func (W *world) callToAction(c *hubClient, cmd string, message []byte) {
 				W.AOIs.addEvent(infos.X, infos.Y, mess)
 			} else {
 				tmp := []byte(fmt.Sprintf("[GOXY]{\"id\":\"%s\",\"x\":%d,\"y\":%d}", user.ID, user.X, user.Y))
-				mess := newDatamessage(nil, clientUser, user.hubClient, tmp)
-				W.hub.Unicast <- mess
+				mess := newDataMessage(nil, clientUser, user.hubClient, tmp)
+				zehub.Unicast <- mess
 			}
 		} else {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
@@ -344,8 +344,8 @@ func (W *world) callToAction(c *hubClient, cmd string, message []byte) {
 			item, _ := W.UserList.Get(infos.From)
 			user := item.(*user)
 			content := []byte(fmt.Sprintf("[CHAT]%s", message))
-			mess := newDatamessage(nil, clientUser, user.hubClient, content)
-			W.hub.Broadcast <- mess
+			mess := newDataMessage(nil, clientUser, user.hubClient, content)
+			zehub.Broadcast <- mess
 		} else {
 			clog.Warn("World", "CallToAction", "%s:%s", cmd, err)
 		}
@@ -360,8 +360,8 @@ func (W *world) sendWorldUpdate() {
 		player := item.Value.(*user)
 		message, err := W.AOIs.getUpdateForPlayer(player.X, player.Y)
 		if err == nil {
-			mess := newDatamessage(nil, clientUser, player.hubClient, message)
-			W.hub.Unicast <- mess
+			mess := newDataMessage(nil, clientUser, player.hubClient, message)
+			zehub.Unicast <- mess
 		}
 	}
 }
@@ -375,8 +375,8 @@ func (W *world) sendServerMassage(txt string) {
 	}
 	json, _ := json.Marshal(data)
 	message := []byte(fmt.Sprintf("[CHAT]%s", json))
-	mess := newDatamessage(nil, clientUser, nil, message)
-	W.hub.Broadcast <- mess
+	mess := newDataMessage(nil, clientUser, nil, message)
+	zehub.Broadcast <- mess
 }
 
 func (W *world) run() {
@@ -427,7 +427,7 @@ func getTileList() []tile {
 
 	clog.Info("World", "getTileList", "Loading Tiles data...")
 	TilesList = make([]tile, 769)
-	f, err := os.Open("../data/TilesList.csv")
+	f, err := os.Open("data/TilesList.csv")
 	if err != nil {
 		clog.Fatal("World", "getTileList", err)
 	}
@@ -477,19 +477,26 @@ func getConfValue(iface interface{}, name string) interface{} {
 	return nil
 }
 
-// WorldInit start the world
-func worldInit(zehubManager *hubManager, conf []byte) *world {
-	zeWorld := &world{}
-	json.Unmarshal(conf, zeWorld)
+func (W world) String() string {
+	return fmt.Sprintf("World Params:\n\tTimeStep: %d\n\tTileSize: %d\tAOI Size: %dx%d", W.TimeStep, W.TileSize, W.AOIWidth, W.AOIHeight)
+}
 
-	zeWorld.TimeStep = time.Duration(zeWorld.TimeStep) * time.Millisecond
+// WorldInit start the world
+func worldInit() *world {
+	zeWorld := &world{
+		TileSize:  ZConf.TileSize,
+		AOIWidth:  ZConf.AOIWidth,
+		AOIHeight: ZConf.AOIHeight,
+		MobSpeed:  ZConf.MobSpeed,
+		MaxMobNum: ZConf.MaxMobNum,
+	}
+	zeWorld.TimeStep = time.Duration(ZConf.TimeStep) * time.Millisecond
 
 	zeWorld.MobList = cmap.NewCMap()
 	zeWorld.UserList = cmap.NewCMap()
-	zeWorld.hub = zehubManager
 	zeWorld.Map = &mapData{}
 
-	zeWorld.Map.loadTiledJSONMap("../data/final.json")
+	zeWorld.Map.loadTiledJSONMap("data/final.json")
 	zeWorld.AOIs = BuildAOIList(zeWorld)
 	// zeWorld.AOIs.addItemsToAOI(zeWorld.Map.Items)
 
@@ -502,5 +509,6 @@ func worldInit(zehubManager *hubManager, conf []byte) *world {
 	// clog.Trace("Mapper", "test", "%v", heightmap)
 	// zeWorld.testPathFinder()
 	// clog.Fatal("", "", nil)
+	clog.Debug("world", "worldInit", "%s", zeWorld)
 	return zeWorld
 }

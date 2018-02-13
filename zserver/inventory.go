@@ -1,4 +1,4 @@
-package main
+package zserver
 
 func (W *world) inventoryAdd(infos inventory) {
 	itemList, _ := W.UserList.Get(infos.Owner)

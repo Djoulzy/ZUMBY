@@ -1,4 +1,4 @@
-package main
+package zserver
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 )
 
 func welcomeNewMonitor(c *hubClient, newName string, appID string) {
-	if len(zehub.Monitors) >= conf.MaxMonitorsConns {
+	if len(zehub.Monitors) >= ZConf.MaxMonitorsConns {
 		zehub.Unregister <- c
 		// <-c.Consistent
 	} else {
@@ -20,7 +20,7 @@ func welcomeNewMonitor(c *hubClient, newName string, appID string) {
 
 func welcomeNewUser(c *hubClient, newName string, appID string) {
 	if zehub.userExists(c.Name, clientUndefined) {
-		if len(zehub.Users) >= conf.MaxUsersConns && !zehub.userExists(newName, clientUser) {
+		if len(zehub.Users) >= ZConf.MaxUsersConns && !zehub.userExists(newName, clientUser) {
 			clog.Warn("CallToAction", "welcomeNewUser", "Too many Users connections, rejecting %s (In:%d/Cl:%d).", c.Name, len(zehub.Incomming), len(zehub.Users))
 			if !scaleList.redirectConnection(c) {
 				clog.Error("CallToAction", "welcomeNewUser", "NO FREE SLOTS !!!")
@@ -41,7 +41,7 @@ func welcomeNewUser(c *hubClient, newName string, appID string) {
 				zehub.Unregister <- c
 			} else {
 				message := []byte(fmt.Sprintf("[WLCM]%s", infos))
-				mess := newDatamessage(nil, clientUser, c, message)
+				mess := newDataMessage(nil, clientUser, c, message)
 				zehub.Unicast <- mess
 			}
 		}
@@ -53,7 +53,7 @@ func welcomeNewUser(c *hubClient, newName string, appID string) {
 }
 
 func welcomeNewServer(c *hubClient, newName string, addr string) {
-	if len(zehub.Servers) >= conf.MaxServersConns {
+	if len(zehub.Servers) >= ZConf.MaxServersConns {
 		clog.Warn("server", "welcomeNewServer", "Too many Server connections, rejecting %s (In:%d/Cl:%d).", c.Name, len(zehub.Incomming), len(zehub.Servers))
 		zehub.Unregister <- c
 		// <-c.Consistent
@@ -115,10 +115,10 @@ func callToAction(c *hubClient, message []byte) {
 		switch cmdGroup {
 		case "[BCST]":
 			// clog.Trace("", "", "%s", message)
-			mess := newDatamessage(c, clientUser, nil, message)
+			mess := newDataMessage(c, clientUser, nil, message)
 			zehub.Broadcast <- mess
 			if c.CType != clientServer {
-				mess = newDatamessage(c, clientServer, nil, message)
+				mess = newDataMessage(c, clientServer, nil, message)
 				zehub.Broadcast <- mess
 			}
 		// case "[UCST]":
@@ -140,7 +140,7 @@ func callToAction(c *hubClient, message []byte) {
 			}
 		case "[GKEY]":
 			crypted, _ := cryptor.encryptB64(string(actionGroup))
-			mess := newDatamessage(nil, c.CType, c, crypted)
+			mess := newDataMessage(nil, c.CType, c, crypted)
 			zehub.Unicast <- mess
 		default:
 			// mess := hub.NewdataMessage(nil, c.CType, c, []byte(fmt.Sprintf("%s:?", cmd_group)))

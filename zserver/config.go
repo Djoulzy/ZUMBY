@@ -1,4 +1,4 @@
-package main
+package zserver
 
 // ServerID Nom du server
 type ServerID struct {
@@ -77,7 +77,8 @@ type AppConfig struct {
 	World
 }
 
-var conf = &AppConfig{
+// ZConf global conf exportation
+var ZConf = &AppConfig{
 	ServerID{},
 	Globals{
 		LogLevel:     4,

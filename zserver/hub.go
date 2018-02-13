@@ -1,4 +1,4 @@
-package main
+package zserver
 
 import (
 	"encoding/json"
@@ -26,15 +26,12 @@ var clientTypeName = [4]string{"Incomming", "Users", "Servers", "Monitors"}
 // 	ReadWrite = 3
 // )
 
-type callToActionFunc func(*hubClient, []byte)
-
 // hubClient is a middleman between the websocket connection and the hub.
 type hubClient struct {
-	ID           string
-	Send         chan []byte
-	Enqueue      chan []byte
-	Quit         chan bool
-	CallToAction callToActionFunc
+	ID      string
+	Send    chan []byte
+	Enqueue chan []byte
+	Quit    chan bool
 
 	Addr      string
 	CType     int
@@ -101,7 +98,7 @@ func newhubManager() *hubManager {
 	return hub
 }
 
-func newDatamessage(from *hubClient, userType int, c *hubClient, content []byte) *dataMessage {
+func newDataMessage(from *hubClient, userType int, c *hubClient, content []byte) *dataMessage {
 	m := &dataMessage{
 		Level:    1,
 		From:     from,
@@ -164,7 +161,7 @@ func (h *hubManager) unregister(client *hubClient) {
 				true,
 			}
 			json, _ := json.Marshal(data)
-			mess := newDatamessage(client, clientMonitor, nil, json)
+			mess := newDataMessage(client, clientMonitor, nil, json)
 			clog.Trace("hubManager", "Unregister", "Broadcasting close of server %s : %s", client.Name, json)
 			h.broadcast(mess)
 		}
@@ -218,7 +215,7 @@ func (h *hubManager) unicast(message *dataMessage) {
 
 func (h *hubManager) action(message *dataMessage) {
 	// clog.Debug("hubManager", "action", "dataMessage %s : %s", message.Dest.Name, message.Content)
-	go message.Dest.CallToAction(message.Dest, message.Content)
+	go callToAction(message.Dest, message.Content)
 }
 
 func (h *hubManager) run() {

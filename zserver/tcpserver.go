@@ -1,4 +1,4 @@
-package main
+package zserver
 
 import (
 	"bufio"
@@ -72,7 +72,7 @@ func tcpWriter(conn *net.TCPConn, cli *hubClient) {
 // }
 
 func tcpConnect(addr string) (*net.TCPConn, error) {
-	conn, err := net.DialTimeout("tcp", addr, time.Second*time.Duration(conf.ConnectTimeOut))
+	conn, err := net.DialTimeout("tcp", addr, time.Second*time.Duration(ZConf.ConnectTimeOut))
 	// addr, _ := net.ResolveTCPAddr("tcp", m.Tcpaddr)
 	// conn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
@@ -94,8 +94,8 @@ func newhubClient(addr string, name string) *hubClient {
 func newOutgoingTCPConn(conn *net.TCPConn, toName string, wg *sync.WaitGroup) {
 	clog.Debug("TCPserver", "NewOutgoingConn", "Contacting %s", conn.RemoteAddr().String())
 	client := newhubClient(conn.RemoteAddr().String(), toName)
-	handShake, _ := cryptor.encryptB64(fmt.Sprintf("%s|%s|SERV", conf.Name, conf.TCPaddr))
-	mess := newDatamessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
+	handShake, _ := cryptor.encryptB64(fmt.Sprintf("%s|%s|SERV", ZConf.Name, ZConf.TCPaddr))
+	mess := newDataMessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
 	zehub.Unicast <- mess
 
 	go tcpWriter(conn, client)
@@ -107,8 +107,8 @@ func newOutgoingTCPConn(conn *net.TCPConn, toName string, wg *sync.WaitGroup) {
 
 func newIncommingTCPConn(conn *net.TCPConn, wg *sync.WaitGroup) {
 	client := newhubClient(conn.RemoteAddr().String(), conn.RemoteAddr().String())
-	handShake, _ := cryptor.encryptB64(fmt.Sprintf("%s|%s|SERV", conf.Name, conf.TCPaddr))
-	mess := newDatamessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
+	handShake, _ := cryptor.encryptB64(fmt.Sprintf("%s|%s|SERV", ZConf.Name, ZConf.TCPaddr))
+	mess := newDataMessage(nil, client.CType, client, append([]byte("[HELO]"), handShake...))
 	zehub.Unicast <- mess
 
 	go tcpWriter(conn, client)
@@ -122,7 +122,7 @@ func newIncommingTCPConn(conn *net.TCPConn, wg *sync.WaitGroup) {
 func tcpStart() {
 	var wg sync.WaitGroup
 
-	formatedaddr, _ := net.ResolveTCPAddr("tcp", conf.TCPaddr)
+	formatedaddr, _ := net.ResolveTCPAddr("tcp", ZConf.TCPaddr)
 	ln, err := net.ListenTCP("tcp", formatedaddr)
 	if err != nil {
 		clog.Error("TCPserver", "Start", "%s", err)

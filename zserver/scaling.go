@@ -1,4 +1,4 @@
-package main
+package zserver
 
 import (
 	"encoding/json"
@@ -57,7 +57,7 @@ func (slist *serversList) updateMetrics(addr string, message []byte) {
 		addBrother <- newSrv
 
 		if len(h.Monitors) > 0 {
-			mess := newDatamessage(nil, clientMonitor, nil, message)
+			mess := newDataMessage(nil, clientMonitor, nil, message)
 			h.Broadcast <- mess
 		}
 	}
@@ -118,9 +118,9 @@ func (slist *serversList) addNewPotentialServer(name string, addr string) {
 func scaleInit(list *map[string]string) *serversList {
 	slist := &serversList{
 		nodes:           make(map[string]*nearbyServer),
-		localName:       conf.Name,
-		localAddr:       conf.TCPaddr,
-		MaxServersConns: conf.MaxServersConns,
+		localName:       ZConf.Name,
+		localAddr:       ZConf.TCPaddr,
+		MaxServersConns: ZConf.MaxServersConns,
 	}
 
 	if list != nil {
@@ -149,7 +149,7 @@ func (slist *serversList) redirectConnection(client *hubClient) bool {
 
 func (slist *serversList) dispatchNewConnection(h *hubManager, name string) {
 	message := []byte(fmt.Sprintf("[KILL]%s", name))
-	mess := newDatamessage(nil, clientServer, nil, message)
+	mess := newDataMessage(nil, clientServer, nil, message)
 	h.Broadcast <- mess
 }
 

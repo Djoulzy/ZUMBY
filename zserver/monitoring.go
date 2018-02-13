@@ -1,4 +1,4 @@
-package main
+package zserver
 
 import (
 	"encoding/json"
@@ -115,10 +115,10 @@ func monStart() {
 			upTime = time.Since(startTime)
 
 			newStats := serverMetrics{
-				SID:      conf.Name,
-				TCPADDR:  conf.TCPaddr,
-				HTTPADDR: conf.HTTPaddr,
-				HOST:     fmt.Sprintf("HTTP: %s - TCP: %s", conf.HTTPaddr, conf.TCPaddr),
+				SID:      ZConf.Name,
+				TCPADDR:  ZConf.TCPaddr,
+				HTTPADDR: ZConf.HTTPaddr,
+				HOST:     fmt.Sprintf("HTTP: %s - TCP: %s", ZConf.HTTPaddr, ZConf.TCPaddr),
 				CPU:      nbcpu,
 				GORTNE:   runtime.NumGoroutine(),
 				STTME:    startTime.Format("02/01/2006 15:04:05"),
@@ -129,13 +129,13 @@ func monStart() {
 				SWAP:     getSwapUsage(),
 				NBMESS:   zehub.SentMessByTicks,
 				NBI:      len(zehub.Incomming),
-				MXI:      conf.MaxIncommingConns,
+				MXI:      ZConf.MaxIncommingConns,
 				NBU:      len(zehub.Users),
-				MXU:      conf.MaxUsersConns,
+				MXU:      ZConf.MaxUsersConns,
 				NBM:      len(zehub.Monitors),
-				MXM:      conf.MaxMonitorsConns,
+				MXM:      ZConf.MaxMonitorsConns,
 				NBS:      len(zehub.Servers),
-				MXS:      conf.MaxServersConns,
+				MXS:      ZConf.MaxServersConns,
 				BRTHLST:  brotherlist,
 			}
 
@@ -150,11 +150,11 @@ func monStart() {
 			} else {
 				if len(zehub.Monitors)+len(zehub.Servers) > 0 {
 					zehub.SentMessByTicks = 0
-					mess := newDatamessage(nil, clientMonitor, nil, json)
+					mess := newDataMessage(nil, clientMonitor, nil, json)
 					zehub.Broadcast <- mess
-					mess = newDatamessage(nil, clientServer, nil, append([]byte("[MNIT]"), json...))
+					mess = newDataMessage(nil, clientServer, nil, append([]byte("[MNIT]"), json...))
 					zehub.Broadcast <- mess
-					mess = newDatamessage(nil, clientUser, nil, append([]byte("[FLBK]"), brthJSON...))
+					mess = newDataMessage(nil, clientUser, nil, append([]byte("[FLBK]"), brthJSON...))
 					zehub.Broadcast <- mess
 				}
 			}

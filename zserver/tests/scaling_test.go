@@ -1,25 +1,18 @@
 package main
 
 import (
-	"os"
 	"testing"
 
-	"github.com/Djoulzy/Tools/clog"
-	"github.com/Djoulzy/ZUMBY/hub"
-	"github.com/Djoulzy/ZUMBY/monitoring"
-	"github.com/Djoulzy/ZUMBY/nettools/tcpserver"
+	"github.com/Djoulzy/Polycom/monitoring"
 	"github.com/stretchr/testify/assert"
 )
 
-var tmphubManager *hub.hubManager
-var slist *ServersList
-
-func newhubClient(name string, userType int) *hub.hubClient {
+func newhubClient(name string, userType int) *hubClient {
 	tmphubClient := &hub.hubClient{
 		Quit:  make(chan bool),
 		CType: userType, Send: make(chan []byte, 256),
 		CallToAction: nil, Addr: "10.31.100.200:8081",
-		Name: name, Content_id: 0, Front_id: "", App_id: "", Country: "", User_agent: "Test Socket",
+		Name: name, AppID: "", Country: "", UserAgent: "Test Socket",
 	}
 	return tmphubClient
 }
@@ -69,31 +62,4 @@ func TestRedirectConnection(t *testing.T) {
 	slist.RedirectConnection(tmphubClient)
 	ret := <-tmphubClient.Send
 	assert.Equal(t, "[RDCT]10.31.100.200:8080", string(ret), "Bad redirection data")
-}
-
-func TestMain(m *testing.M) {
-	clog.LogLevel = 5
-	clog.StartLogging = true
-
-	tmphubManager = hub.NewhubManager()
-	go tmphubManager.Run()
-
-	tcp_params := &tcpserver.Manager{
-		ServerName:               "Test",
-		Tcpaddr:                  "127.0.0.1:8081",
-		hubManager:               tmphubManager,
-		ConnectTimeOut:           2,
-		WriteTimeOut:             1,
-		ScalingCheckServerPeriod: 5,
-		MaxServersConns:          5,
-		CallToAction:             nil,
-		Cryptor:                  nil,
-	}
-
-	srvList := make(map[string]string)
-	srvList["srv2"] = "127.0.0.3"
-	srvList["srv2"] = "127.0.0.5"
-	slist = Init(tcp_params, &srvList)
-
-	os.Exit(m.Run())
 }
