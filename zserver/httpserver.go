@@ -95,10 +95,10 @@ func httpReader(conn *websocket.Conn, cli *hubClient) {
 		return nil
 	})
 	for {
-		_, message, err := conn.ReadMessage()
+		mTyp, message, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				clog.Error("HTTPServer", "Reader", "%v - %s", err, message)
+				clog.Error("HTTPServer", "Reader", "[%d] %v - %s", mTyp, err, message)
 			}
 			return
 		}
@@ -141,9 +141,10 @@ func httpWriter(conn *websocket.Conn, cli *hubClient) {
 			}
 		case <-cli.Quit:
 			cm := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "An other device is using your account !")
-			if err := _httpWriter(conn, websocket.CloseMessage, cm); err != nil {
-				clog.Error("HTTPServer", "Writer", "Cannot write ClosedataMessage to %s", cli.Name)
-			}
+			_httpWriter(conn, websocket.CloseMessage, cm)
+			// if err := _httpWriter(conn, websocket.CloseMessage, cm); err != nil {
+			// 	clog.Error("HTTPServer", "Writer", "Cannot write ClosedataMessage to %s", cli.Name)
+			// }
 			return
 		}
 	}
