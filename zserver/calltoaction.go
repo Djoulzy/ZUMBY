@@ -1,7 +1,6 @@
 package zserver
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/Djoulzy/Tools/clog"
@@ -36,14 +35,15 @@ func welcomeNewUser(c *hubClient, newName string, appID string) {
 			// message := []byte(fmt.Sprintf("[NUSR]%s", c.Name))
 			// mess := hub.NewdataMessage(c, hub.clientUser, nil, message)
 			// zehub.Broadcast <- mess
-			infos, err := zeWorld.logUser(c)
-			if err != nil {
-				zehub.Unregister <- c
-			} else {
-				message := []byte(fmt.Sprintf("[WLCM]%s", infos))
-				mess := newDataMessage(nil, clientUser, c, message)
-				zehub.Unicast <- mess
-			}
+
+			// infos, err := zeWorld.logUser(c)
+			// if err != nil {
+			// 	zehub.Unregister <- c
+			// } else {
+			// 	message := []byte(fmt.Sprintf("[WLCM]%s", infos))
+			// 	mess := newDataMessage(nil, clientUser, c, message)
+			// 	zehub.Unicast <- mess
+			// }
 		}
 	} else {
 		clog.Warn("CallToAction", "welcomeNewUser", "Can't identify client... Disconnecting %s / %s.", c.Name, newName)
