@@ -117,6 +117,7 @@ func httpWriter(conn *websocket.Conn, cli *hubClient) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
+		cli.Addr = ""
 		conn.Close()
 	}()
 
@@ -180,12 +181,7 @@ func wsConnect(w http.ResponseWriter, r *http.Request) {
 
 	zehub.Register <- client
 	go httpWriter(httpconn, client)
-	httpReader(httpconn, client)
-
-	// zeWorld.dropUser(client.Name)
-	// client.Addr = ""
-	// httpconn.Close()
-	// zehub.Unregister <- client
+	go httpReader(httpconn, client)
 }
 
 func throttlehubClients(h http.Handler, n int) http.Handler {
