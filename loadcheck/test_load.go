@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Djoulzy/Polycom/urlcrypt"
 	"github.com/Djoulzy/Tools/clog"
 	"github.com/Djoulzy/Tools/config"
-	"github.com/Djoulzy/ZUMBY/urlcrypt"
 	"github.com/gorilla/websocket"
 )
 
@@ -85,7 +85,7 @@ func (c *Conn) readPump() {
 		return nil
 	})
 	for {
-		_, message, err := c.ws.ReadMessage()
+		_, _, err := c.ws.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
 			}
@@ -98,7 +98,6 @@ func (c *Conn) readPump() {
 		// 	go TryRedirect(c, string(action_group))
 		// 	break
 		// }
-		clog.Trace("", "", "%s", message)
 	}
 }
 
@@ -169,7 +168,7 @@ func main() {
 		HEX_IV:    []byte(conf.HEX_IV),
 	}
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1000; i++ {
 		wg.Add(1)
 		go connect(i, u)
 		wg.Wait()

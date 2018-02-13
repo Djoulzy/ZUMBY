@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	fileDBPath = "../../FileDB"
+	fileDBPath = "../FileDB"
 )
 
 // SaveUser flush les data joueur dans un fichier texte
