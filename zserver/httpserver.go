@@ -180,7 +180,9 @@ func wsConnect(w http.ResponseWriter, r *http.Request) {
 	zehub.Register <- client
 	go httpWriter(httpconn, client)
 	httpReader(httpconn, client)
+
 	zeWorld.dropUser(client.Name)
+	client.Addr = ""
 	httpconn.Close()
 	zehub.Unregister <- client
 }
