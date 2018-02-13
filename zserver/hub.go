@@ -145,9 +145,9 @@ func (h *hubManager) unregister(client *hubClient) {
 	if h.isRegistered(client) {
 		delete(h.FullUsersList[client.CType], client.Name)
 
-		select {
-		case client.Quit <- true:
-		}
+		// select {
+		// case client.Quit <- true:
+		// }
 
 		close(client.Send)
 		close(client.Quit)

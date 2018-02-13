@@ -82,11 +82,11 @@ func httpConnect() *websocket.Conn {
 }
 
 func httpReader(conn *websocket.Conn, cli *hubClient) {
-	defer func() {
-		zeWorld.dropUser(cli.Name)
-		zehub.Unregister <- cli
-		conn.Close()
-	}()
+	// defer func() {
+	// 	zeWorld.dropUser(cli.Name)
+	// 	zehub.Unregister <- cli
+	// 	conn.Close()
+	// }()
 	conn.SetReadLimit(maxdataMessageSize)
 	conn.SetReadDeadline(time.Now().Add(pongWait))
 	conn.SetPongHandler(func(string) error {
@@ -142,9 +142,9 @@ func httpWriter(conn *websocket.Conn, cli *hubClient) {
 		case <-cli.Quit:
 			cm := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "An other device is using your account !")
 			_httpWriter(conn, websocket.CloseMessage, cm)
-			// if err := _httpWriter(conn, websocket.CloseMessage, cm); err != nil {
-			// 	clog.Error("HTTPServer", "Writer", "Cannot write ClosedataMessage to %s", cli.Name)
-			// }
+			if err := _httpWriter(conn, websocket.CloseMessage, cm); err != nil {
+				clog.Error("HTTPServer", "Writer", "Cannot write ClosedataMessage to %s", cli.Name)
+			}
 			return
 		}
 	}
@@ -179,7 +179,10 @@ func wsConnect(w http.ResponseWriter, r *http.Request) {
 
 	zehub.Register <- client
 	go httpWriter(httpconn, client)
-	go httpReader(httpconn, client)
+	httpReader(httpconn, client)
+	zeWorld.dropUser(client.Name)
+	httpconn.Close()
+	zehub.Unregister <- client
 }
 
 func throttlehubClients(h http.Handler, n int) http.Handler {
