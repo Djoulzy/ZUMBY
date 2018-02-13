@@ -168,7 +168,7 @@ func main() {
 		HEX_IV:    []byte(conf.HEX_IV),
 	}
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 10000; i++ {
 		wg.Add(1)
 		go connect(i, u)
 		wg.Wait()

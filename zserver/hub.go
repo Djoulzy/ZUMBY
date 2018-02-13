@@ -210,9 +210,11 @@ func (h *hubManager) flushBroadcastQueue() {
 }
 
 func (h *hubManager) unicast(message *dataMessage) {
-	message.Dest.Send <- message.Content
-	// clog.Debug("hubManager", "unicast", "Unicast dataMessage to %s : %s", message.Dest.Name, message.Content)
-	h.SentMessByTicks++
+	if h.isRegistered(message.Dest) {
+		message.Dest.Send <- message.Content
+		// clog.Debug("hubManager", "unicast", "Unicast dataMessage to %s : %s", message.Dest.Name, message.Content)
+		h.SentMessByTicks++
+	}
 }
 
 func (h *hubManager) action(message *dataMessage) {
